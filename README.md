@@ -21,7 +21,7 @@ The package "glick/glkit" relies on:
 	"gopkg.in/logfmt.v0"
 	"gopkg.in/stack.v1"
 
-In order to run the tests, server counterpart executables need to be built. "pif/test/build_tests.sh" provides a bash script for doing this, it must be run from the directory it is in.
+In order to run the tests, server counterpart executables need to be built. "test/build_tests.sh" provides a bash script for doing this, it must be run from the directory it is in.
 
 Examples of usage still need to be written, for now the tests give the best indication.
 
