@@ -72,7 +72,7 @@ func ConfigPIE(lib *glick.Library) error {
 		ppo, err := l.ProtoPlugOut(cfg.API)
 		if err != nil {
 			return fmt.Errorf("entry %d PIE register plugin error: %v",
-				line, err)
+				line, err) // no simple test possible for this path
 		}
 		pi := PluginPie(cfg.JSON, cfg.Method, cfg.Path, cfg.Args, ppo)
 		if err := l.RegPlugin(cfg.API, cfg.Action, pi); err != nil {

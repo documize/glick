@@ -55,6 +55,11 @@ func TestConfig(t *testing.T) {
 		]`)); err == nil {
 		t.Error("unsuited API for cmd did not error")
 	}
+	if err := l.Config([]byte(`[
+{"API":"int/*string","Action":"badAPI","Type":"URL","Path":"pwd"}
+		]`)); err == nil {
+		t.Error("unsuited API for URL did not error")
+	}
 	var is test.IntStr
 	if err := l.RegAPI("test", is, outProtoInt, 0); err != nil {
 		t.Error(err)
@@ -79,7 +84,6 @@ func TestConfig(t *testing.T) {
 		]`)); err == nil {
 		t.Error("unsuited URL not spotted")
 	}
-
 	if err := l.AddConfigurator("zombie", nil); err == nil {
 		t.Error("nil configurator not spotted")
 	}

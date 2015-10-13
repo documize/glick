@@ -90,9 +90,6 @@ func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto Proto
 		return ErrDupAPI
 	}
 	ot := reflect.TypeOf(outPlugProto())
-	if ot.Kind() != reflect.Ptr {
-		return ErrRetNotPtr
-	}
 	l.apim[api] = apidef{reflect.TypeOf(inPrototype), ot, outPlugProto, timeout}
 	return nil
 }
@@ -180,6 +177,7 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 	}
 }
 
+// ProtoPlugOut provides the way to return a function to create the output for a plugin.
 func (l *Library) ProtoPlugOut(api string) (ppo ProtoPlugOut, err error) {
 	v, ok := l.apim[api]
 	if !ok {

@@ -2,12 +2,13 @@ package glkit_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/documize/glick"
+	"github.com/documize/glick/glkit"
 
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -40,8 +41,29 @@ func (stringService) Count(s string) int {
 }
 
 func servermain() {
+	lib := glick.New(nil)
+	if err := lib.RegAPI("api", uppercaseRequest{},
+		func() interface{} { return uppercaseResponse{} }, time.Second); err != nil {
+		panic(err)
+	}
+	if err := lib.RegPlugin("api", "lc",
+		func(ctx context.Context, in interface{}) (interface{}, error) {
+			return uppercaseResponse{
+				V: strings.ToLower(in.(uppercaseRequest).S),
+			}, nil
+		}); err != nil {
+		panic(err)
+	}
+
 	ctx := context.Background()
 	svc := stringService{}
+
+	lowercaseHandler := httptransport.NewServer(
+		ctx,
+		glkit.MakeEndpoint(lib, "api", "lc"),
+		decodeUppercaseRequest,
+		encodeResponse,
+	)
 
 	uppercaseHandler := httptransport.NewServer(
 		ctx,
@@ -58,6 +80,7 @@ func servermain() {
 	)
 
 	http.Handle("/uppercase", uppercaseHandler)
+	http.Handle("/lowercase", lowercaseHandler)
 	http.Handle("/count", countHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
@@ -124,31 +147,49 @@ var ErrEmpty = errors.New("empty string")
 func TestGoKitStringsvc1(t *testing.T) {
 	go servermain()
 
-	r, err := http.Post("http://localhost:8080/uppercase", "application/json",
-		strings.NewReader(`{"s":"hello, world"}`))
-	if err != nil {
+	l := glick.New(nil)
+	if err := glkit.ConfigKit(l); err != nil {
 		t.Error(err)
 	}
-	b, err2 := ioutil.ReadAll(r.Body)
-	if err2 != nil {
-		t.Error(err2)
-	}
-	r.Body.Close()
-	if string(b) != `{"v":"HELLO, WORLD"}`+"\n" {
-		t.Error("/uppercase did not work: " + string(b))
-	}
-	r, err = http.Post("http://localhost:8080/count", "application/json",
-		strings.NewReader(`{"s":"hello, world"}`))
-	if err != nil {
+	if err := l.RegAPI("uppercase", uppercaseRequest{},
+		func() interface{} { return &uppercaseResponse{} }, time.Second); err != nil {
 		t.Error(err)
 	}
-	b, err2 = ioutil.ReadAll(r.Body)
-	if err2 != nil {
-		t.Error(err2)
+	if err := l.Config([]byte(`[
+{"API":"uppercase","Action":"uc","Type":"KIT","Path":"http://localhost:8080/uppercase","JSON":true},
+{"API":"uppercase","Action":"lc","Type":"KIT","Path":"http://localhost:8080/lowercase","JSON":true}
+		]`)); err != nil {
+		t.Error(err)
 	}
-	r.Body.Close()
-	if string(b) != `{"v":12}`+"\n" {
-		t.Error("/count did not work: " + string(b))
+	if rep, err := l.Run(nil, "uppercase", "uc", uppercaseRequest{S: "abc"}); err == nil {
+		if rep.(*uppercaseResponse).V != "ABC" {
+			t.Error("uppercase did not work")
+		}
+	} else {
+		t.Error(err)
+	}
+	if rep, err := l.Run(nil, "uppercase", "lc", uppercaseRequest{S: "XYZ"}); err == nil {
+		if rep.(*uppercaseResponse).V != "xyz" {
+			t.Error("lowercase did not work")
+		}
+	} else {
+		t.Error(err)
+	}
+	if err := l.Config([]byte(`[
+{"API":"uppercase","Action":"uc","Type":"KIT","Path":"http://localhost:8080/uppercase"}
+		]`)); err == nil {
+		t.Error("did not spot non-JSON")
+	}
+
+	// use the more direct method for count
+	count := glkit.PluginKitJSONoverHTTP("http://localhost:8080/count",
+		func() interface{} { return &countResponse{} })
+	cc, ecc := count(nil, countRequest{S: "abc"})
+	if ecc != nil {
+		t.Error(ecc)
+	}
+	if cc.(*countResponse).V != 3 {
+		t.Error("count did not work")
 	}
 }
 

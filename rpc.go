@@ -5,6 +5,7 @@ import (
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"net/url"
+	"reflect"
 
 	"golang.org/x/net/context"
 )
@@ -14,8 +15,10 @@ func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) P
 	if endPoint == "" || serviceMethod == "" {
 		return nil
 	}
-	_, err := url.Parse(endPoint)
-	if err != nil {
+	if _, err := url.Parse(endPoint); err != nil {
+		return nil
+	}
+	if reflect.TypeOf(ppo()).Kind() != reflect.Ptr {
 		return nil
 	}
 	return func(ctx context.Context, in interface{}) (out interface{}, err error) {

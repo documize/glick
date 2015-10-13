@@ -115,5 +115,15 @@ func TestRPC(t *testing.T) {
 		if _, err := l.Run(nil, api, "errEP", par); err == nil {
 			t.Error("did not error on error end-point")
 		}
+
+		noPoint := func() interface{} { return interface{}(42) }
+		if err := l.RegAPI("noPoint", 42, noPoint, 0); err != nil {
+			t.Error(err)
+		}
+		if err := l.RegPlugin("noPoint", "errEP",
+			glick.PluginRPC(useJSON, "CI.CopyIntX", "localhost:9999", noPoint)); err == nil {
+			t.Error("a non-pointer return should error")
+		}
+
 	}
 }

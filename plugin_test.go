@@ -16,11 +16,7 @@ func TestAPI(t *testing.T) {
 		t.Error("does not return nil api error")
 	}
 	var dummy int
-	outBad := func() interface{} { var d int; return interface{}(d) }
 	outGood := func() interface{} { var d int; return interface{}(&d) }
-	if err := l.RegAPI("z", dummy, outBad, time.Second); err != glick.ErrRetNotPtr {
-		t.Error("does not error on return prototype not pointer")
-	}
 	if err := l.RegAPI("z", dummy, outGood, time.Second); err != nil {
 		t.Error("1st reg API returns error")
 	}
@@ -108,7 +104,7 @@ func Forever(ctx context.Context, in interface{}) (interface{}, error) {
 	t := false
 	for {
 	}
-	return &t, nil
+	return &t, nil // this line is unreachable
 }
 func outForever() interface{} {
 	var t bool

@@ -35,7 +35,11 @@ func ConfigGRPChw(lib *glick.Library) error {
 				if err != nil {
 					return nil, err
 				}
-				defer conn.Close()
+				defer func() {
+					if e := conn.Close(); e != nil {
+						panic(e)
+					}
+				}()
 				c := pb.NewGreeterClient(conn)
 
 				r, err := c.SayHello(context.Background(), ins)
@@ -72,7 +76,9 @@ func TestGRPChw(t *testing.T) {
 	if err = l.RegAPI("hw", &req, func() interface{} { var hr pb.HelloReply; return interface{}(&hr) }, 2*time.Second); err != nil {
 		t.Error(err)
 	}
-	ConfigGRPChw(l)
+	if err := ConfigGRPChw(l); err != nil {
+		t.Error(err)
+	}
 	if err := l.Config([]byte(`[
 {"API":"hw","Action":"hwAct","Type":"gRPChw","Path":"` + address + `"}
 		]`)); err != nil {

@@ -60,5 +60,10 @@ func TestGetURL(t *testing.T) {
 	if _, err := l.Run(nil, "string/*int", "documize", ""); err == nil {
 		t.Error("bad api out did not error")
 	}
-
+	if _, err := l.Run(nil, "string/*string", "documize", nil); err == nil {
+		t.Error("nil input value did not error")
+	}
+	if _, err := l.Run(nil, "string/*string", "documize", true); err == nil {
+		t.Error("incorrect input value did not error")
+	}
 }

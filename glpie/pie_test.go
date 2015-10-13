@@ -97,6 +97,16 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		]`)); err == nil {
 		t.Error("unsuited end pie exe not spotted")
 	}
+	if err := l.Config([]byte(`[
+{"API":"` + api + `","Action":"intStr1","Type":"PIE","Path":"illegal path"}
+		]`)); err == nil {
+		t.Error("unsuited pie exe path not spotted")
+	}
+	if err := l.Config([]byte(`[
+{"API":"nothing here","Action":"intStr1","Type":"PIE"}
+		]`)); err == nil {
+		t.Error("unsuited pie api not spotted")
+	}
 
 }
 
