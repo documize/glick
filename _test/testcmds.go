@@ -5,12 +5,15 @@ import (
 	"time"
 )
 
+// IntStr is a testing structure
 type IntStr struct {
 	I int
 }
 
+// CI is a testing type
 type CI struct{}
 
+// CopyIntX is a testing method
 func (c *CI) CopyIntX(in IntStr, out *IntStr) error {
 	switch in.I {
 	case 0:

@@ -4,24 +4,25 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/context/ctxhttp"
 )
 
-// PluginGetURL only works with an api with the signature string/*string.
-func PluginGetURL(static bool, uri string) Plugger {
+// PluginGetURL fetches the content of a URL, which could be static or dynamic (passed in).
+// It only works with an api with a simple Text/Text signature.
+func PluginGetURL(static bool, uri string, model interface{}) Plugger {
 	if static {
 		if uri == "" {
 			return nil
 		}
 	}
 	return func(ctx context.Context, in interface{}) (out interface{}, err error) {
-		ins, ok := in.(string)
-		if !ok {
-			return nil, ErrNotStr
+		inb, err := TextBytes(in)
+		if err != nil {
+			return nil, err
 		}
+		ins := string(inb)
 		if static {
 			ins = uri
 		}
@@ -34,21 +35,19 @@ func PluginGetURL(static bool, uri string) Plugger {
 		if err != nil {
 			return nil, err // unable to create a simple test case for this error
 		}
-		s := string(byts)
-		return &s, nil
+		return TextConvert(byts, model)
 	}
 }
 
-// ConfigGetURL provides the Configurator for the URL class of plugin
+// ConfigGetURL provides the Configurator for the URL class of plugins that
+// fetch the content of URLs.
 func ConfigGetURL(lib *Library) error {
 	return lib.AddConfigurator("URL", func(l *Library, line int, cfg *Config) error {
-		var proto string
-		if !(l.apim[cfg.API].in.AssignableTo(reflect.TypeOf(proto)) &&
-			l.apim[cfg.API].out.AssignableTo(reflect.TypeOf(&proto))) {
+		if !(IsText(l.apim[cfg.API].ppi) && IsText(l.apim[cfg.API].ppo())) {
 			return fmt.Errorf("entry %d API %s is not of simple type (string/*string) ",
 				line, cfg.API)
 		}
-		pi := PluginGetURL(cfg.Static, cfg.Path)
+		pi := PluginGetURL(cfg.Static, cfg.Path, l.apim[cfg.API].ppo())
 		if err := l.RegPlugin(cfg.API, cfg.Action, pi); err != nil {
 			return fmt.Errorf("entry %d URL register plugin error: %v",
 				line, err)

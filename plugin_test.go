@@ -72,11 +72,8 @@ func TestDup(t *testing.T) {
 		t.Error("first entry gives error")
 	}
 	er2 := l.RegPlugin("A", "B", Simp)
-	if er2 == nil {
-		t.Error("second entry does not give error")
-	}
-	if er2 != glick.ErrDupPlug {
-		t.Error("wrong duplicate error:", er2)
+	if er2 != nil {
+		t.Error("second entry should not give error")
 	}
 }
 
@@ -122,7 +119,7 @@ func outJustBad() interface{} {
 
 func TestOverloader(t *testing.T) {
 	hadOvStub := Tov
-	l := glick.New(func(ctx context.Context, api, act string) (context.Context, glick.Plugger, error) {
+	l := glick.New(func(ctx context.Context, api, act string, handler glick.Plugger) (context.Context, glick.Plugger, error) {
 		if api == "abc" && act == "meaning-of-life" {
 			return ctx, hadOvStub, nil
 		}

@@ -16,15 +16,15 @@ func TestGetURL(t *testing.T) {
 		t.Error(err)
 	}
 	if err := l.RegPlugin("string/*string", "bad1",
-		glick.PluginGetURL(true, "")); err == nil {
+		glick.PluginGetURL(true, "", &proto)); err == nil {
 		t.Error("empty url not errored")
 	}
 	if err := l.RegPlugin("string/*string", "dynamic1",
-		glick.PluginGetURL(false, "")); err != nil {
+		glick.PluginGetURL(false, "", &proto)); err != nil {
 		t.Error(err)
 	}
 	if err := l.RegPlugin("string/*string", "documize",
-		glick.PluginGetURL(true, "https://documize.com")); err != nil {
+		glick.PluginGetURL(true, "https://documize.com", &proto)); err != nil {
 		t.Error(err)
 	}
 	if _, err := l.Run(nil, "string/*string", "documize", ""); err != nil {
@@ -44,7 +44,7 @@ func TestGetURL(t *testing.T) {
 		t.Error(err)
 	}
 	if err := l.RegPlugin("int/*string", "documize",
-		glick.PluginGetURL(true, "https://documize.com")); err != nil {
+		glick.PluginGetURL(true, "https://documize.com", &proto)); err != nil {
 		t.Error(err)
 	}
 	if _, err := l.Run(nil, "int/*string", "documize", 42); err == nil {
@@ -54,7 +54,7 @@ func TestGetURL(t *testing.T) {
 		t.Error(err)
 	}
 	if err := l.RegPlugin("string/*int", "documize",
-		glick.PluginGetURL(true, "https://documize.com")); err != nil {
+		glick.PluginGetURL(true, "https://documize.com", &proto)); err != nil {
 		t.Error(err)
 	}
 	if _, err := l.Run(nil, "string/*int", "documize", ""); err == nil {

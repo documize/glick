@@ -1,3 +1,7 @@
+// Package glpie exists to allow use of "github.com/natefinch/pie"
+// (a toolkit for creating plugins for Go applications) from
+// the glick package.
+//
 package glpie
 
 import (
@@ -66,7 +70,7 @@ func PluginPie(useJSON bool, serviceMethod, cmdPath string, args []string, ppo g
 	}
 }
 
-// ConfigPIE provides the Configurator for the PIE class of plugin
+// ConfigPIE provides the Configurator for the PIE class of plugin.
 func ConfigPIE(lib *glick.Library) error {
 	return lib.AddConfigurator("PIE", func(l *glick.Library, line int, cfg *glick.Config) error {
 		ppo, err := l.ProtoPlugOut(cfg.API)

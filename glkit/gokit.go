@@ -1,3 +1,16 @@
+// Package glkit enables integration with gokit.io from the glick library.
+// It can do so in two ways, either within the server, or as a client.
+//
+// Within a go-kit server, the glick package can provide gokit endpoints
+// created using glick (and therefore the glick 3-level configuration)
+// by using the MakeEndpoint() function.
+//
+// When writing a client to a go-kit server, the PluginKitJSONoverHTTP()
+// function allows the creation of simple plugins for JSON over HTTP
+// (the most basic form of microservice available within go-kit);
+// while ConfigKit() allows those simple plugins to be configured via
+// the library JSON configuration process.
+//
 package glkit
 
 import (
@@ -20,7 +33,8 @@ func MakeEndpoint(l *glick.Library, api, action string) endpoint.Endpoint {
 	}
 }
 
-// PluginKitJSONoverHTTP enables plugin commands created using gokit.io
+// PluginKitJSONoverHTTP enables calls to plugin commands
+// implemented as microservices using "gokit.io".
 func PluginKitJSONoverHTTP(cmdPath string, ppo glick.ProtoPlugOut) glick.Plugger {
 	return func(ctx context.Context, in interface{}) (out interface{}, err error) {
 		var j, b []byte
@@ -42,7 +56,7 @@ func PluginKitJSONoverHTTP(cmdPath string, ppo glick.ProtoPlugOut) glick.Plugger
 	}
 }
 
-// ConfigKit provides the Configurator for the GoKit class of plugin
+// ConfigKit provides the Configurator for the GoKit class of plugin.
 func ConfigKit(lib *glick.Library) error {
 	return lib.AddConfigurator("KIT", func(l *glick.Library, line int, cfg *glick.Config) error {
 		ppo, err := l.ProtoPlugOut(cfg.API)

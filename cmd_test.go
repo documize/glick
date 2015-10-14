@@ -17,7 +17,7 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 		return
 	}
 	if err := l.RegPlugin("string/&string", "pwdBad",
-		glick.PluginCmd("pwdBad", nil)); err == nil {
+		glick.PluginCmd("pwdBad", nil, &proto)); err == nil {
 		t.Error("incorrect cmd plugin did not fail")
 		return
 	}
@@ -26,7 +26,7 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 		return
 	}
 	if err := l.RegPlugin("string/&string", "pwd",
-		glick.PluginCmd("pwd", nil)); err != nil {
+		glick.PluginCmd("pwd", nil, &proto)); err != nil {
 		t.Error(err)
 		return
 	}
@@ -39,7 +39,7 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 		}
 	}
 	if err := l.RegPlugin("string/&string", "exit1",
-		glick.PluginCmd("bash", []string{"./test/exit1.sh"})); err != nil {
+		glick.PluginCmd("bash", []string{"./_test/exit1.sh"}, &proto)); err != nil {
 		t.Error(err)
 		return
 	}
@@ -57,12 +57,12 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 		return
 	}
 	if err := l.RegPlugin("int/&int", "pwd",
-		glick.PluginCmd("pwd", nil)); err != nil {
+		glick.PluginCmd("pwd", nil, &proto)); err != nil {
 		t.Error(err)
 		return
 	}
 	if _, err := l.Run(nil, "int/&int", "pwd", 11); err == nil {
-		t.Error("doesn not error on non string input value")
+		t.Error("does not error on non string input value")
 		return
 	}
 	if err := l.RegAPI("string/&int", proto, ipProto, 3*time.Second); err != nil {
@@ -70,7 +70,7 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 		return
 	}
 	if err := l.RegPlugin("string/&int", "pwd",
-		glick.PluginCmd("pwd", nil)); err != nil {
+		glick.PluginCmd("pwd", nil, &proto)); err != nil {
 		t.Error(err)
 		return
 	}
@@ -82,7 +82,7 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 		t.Error(err)
 	}
 	if err := l.RegPlugin("alwaysTimeout", "sleep",
-		glick.PluginCmd("sleep", []string{"10"})); err != nil {
+		glick.PluginCmd("sleep", []string{"10"}, &proto)); err != nil {
 		t.Error(err)
 		return
 	}

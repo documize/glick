@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/documize/glick"
-	"github.com/documize/glick/test"
+	test "github.com/documize/glick/_test"
 )
 
 func TestRPC(t *testing.T) {

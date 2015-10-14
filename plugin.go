@@ -11,21 +11,21 @@ import (
 )
 
 var (
-	ErrNilAPI    = errors.New("nil api")
-	ErrDupAPI    = errors.New("duplicate api")
-	ErrRetNotPtr = errors.New("api return type not a pointer")
-	ErrNoAPI     = errors.New("unknown api")
-	ErrDupPlug   = errors.New("duplicate plugin")
-	ErrNoPlug    = errors.New("no plugin found")
-	ErrNotStr    = errors.New("API in value not a string")
-	ErrNotPtrStr = errors.New("API out value not a pointer to a string")
+	// ErrNilAPI means an API value is nil.
+	ErrNilAPI = errors.New("nil api")
+	// ErrDupAPI means that a duplicate name has been given for an API.
+	ErrDupAPI = errors.New("duplicate api")
+	// ErrNoAPI means that the name of the API was not found in the map.
+	ErrNoAPI = errors.New("unknown api")
+	// ErrNoPlug means that no handler function was found for the plugin.
+	ErrNoPlug = errors.New("no plugin found")
 )
 
 // Plugger provides a way to call plugins,
-// it has the same design as Endpoint in "github.com/go-kit/kit"
+// it has the same design as Endpoint in "github.com/go-kit/kit".
 type Plugger func(ctx context.Context, in interface{}) (out interface{}, err error)
 
-// ProtoPlugOut provides a prototype for the output of a Plugger, must be a pointer
+// ProtoPlugOut provides a prototype for the output of a Plugger
 type ProtoPlugOut func() interface{}
 
 type plugOut struct {
@@ -33,15 +33,15 @@ type plugOut struct {
 	err error
 }
 
-// Overloader allows the standard system settings for an API to be overloaded,
-// depending on the context passed in.
-type Overloader func(ctx context.Context, api, action string) (context.Context, Plugger, error)
+// Overloader allows the standard system settings for an API
+// to be overloaded, depending on the context passed in.
+type Overloader func(ctx context.Context, api, action string, handler Plugger) (context.Context, Plugger, error)
 type plugkey struct {
 	api, action string
 }
 type plugmap map[plugkey]Plugger
 type apidef struct {
-	in, out reflect.Type
+	ppi     interface{}
 	ppo     ProtoPlugOut
 	timeout time.Duration
 }
@@ -83,26 +83,23 @@ func New(ov Overloader) *Library {
 func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto ProtoPlugOut, timeout time.Duration) error {
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
-	if inPrototype == nil || outPlugProto == nil {
+	if inPrototype == nil || outPlugProto == nil || outPlugProto() == nil {
 		return ErrNilAPI
 	}
 	if _, found := l.apim[api]; found {
 		return ErrDupAPI
 	}
-	ot := reflect.TypeOf(outPlugProto())
-	l.apim[api] = apidef{reflect.TypeOf(inPrototype), ot, outPlugProto, timeout}
+	l.apim[api] = apidef{inPrototype, outPlugProto, timeout}
 	return nil
 }
 
 // RegPlugin registers a Plugger to use for this action on an api.
+// Duplicate actions simply overload what is there.
 func (l *Library) RegPlugin(api, action string, handler Plugger) error {
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	if _, hasAPI := l.apim[api]; !hasAPI {
 		return ErrNoAPI
-	}
-	if _, found := l.pim[plugkey{api, action}]; found {
-		return ErrDupPlug
 	}
 	if handler == nil {
 		return ErrNoPlug
@@ -124,11 +121,10 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 	}
 	def, ok := l.apim[api]
 	if ok {
-		if reflect.TypeOf(in).AssignableTo(def.in) {
-			// passed type check
-		} else {
-			return nil, fmt.Errorf("bad api types - in: got %T want %s",
-				in, def.in.String())
+		// TODO optimise?
+		if !reflect.TypeOf(in).AssignableTo(reflect.TypeOf(def.ppi)) {
+			return nil, fmt.Errorf("bad api types - in: got %T want %T",
+				in, def.ppi)
 		}
 	} else {
 		return nil, ErrNoAPI
@@ -144,7 +140,7 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 	if l.ovfn != nil {
 		var ovHandler Plugger
 		var ovErr error
-		ctx, ovHandler, ovErr = l.ovfn(ctx, api, action)
+		ctx, ovHandler, ovErr = l.ovfn(ctx, api, action, handler)
 		if ovErr != nil {
 			return nil, ovErr
 		}
@@ -169,9 +165,10 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 		return nil, ctxWT.Err()
 	case plo := <-reply:
 		if plo.err == nil && (plo.out == nil ||
-			!reflect.TypeOf(plo.out).AssignableTo(def.out)) {
-			return nil, fmt.Errorf("bad api type - out: got %T want %s",
-				plo.out, def.out.String())
+			!reflect.TypeOf(plo.out).AssignableTo(
+				reflect.TypeOf(def.ppo()))) { // TODO optimize?
+			return nil, fmt.Errorf("bad api type - out: got %T want %T",
+				plo.out, def.ppo())
 		}
 		return plo.out, plo.err
 	}

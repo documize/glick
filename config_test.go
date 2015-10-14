@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/documize/glick"
-	"github.com/documize/glick/test"
+	test "github.com/documize/glick/_test"
 )
 
 func TestConfig(t *testing.T) {
@@ -36,11 +36,6 @@ func TestConfig(t *testing.T) {
 {"API":"string/*string","Action":"pwd","Type":"CMD","Path":"pwd"}
 		]`)); err != nil {
 		t.Error(err)
-	}
-	if err := l.Config([]byte(`[
-{"API":"string/*string","Action":"pwd","Type":"CMD","Path":"pwd"}
-		]`)); err == nil {
-		t.Error("duplicate action did not error")
 	}
 	if err := l.Config([]byte(`[
 {"API":"string/*string","Action":"garbage","Type":"CMD","Path":"garbage"}

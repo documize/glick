@@ -11,6 +11,7 @@ import (
 )
 
 // PluginRPC returns a type which implements the Plugger interface for making an RPC.
+// The return type of this class of plugin must be a pointer.
 func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) Plugger {
 	if endPoint == "" || serviceMethod == "" {
 		return nil
@@ -38,7 +39,7 @@ func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) P
 	}
 }
 
-// ConfigRPC provides the Configurator for the RPC class of plugin
+// ConfigRPC provides the Configurator for the RPC class of plugin.
 func ConfigRPC(lib *Library) error {
 	return lib.AddConfigurator("RPC", func(l *Library, line int, cfg *Config) error {
 		ppo := l.apim[cfg.API].ppo

@@ -6,19 +6,19 @@ import (
 	"fmt"
 )
 
-// Config defines a line in the JSON configuration file
+// Config defines a line in the JSON configuration file for a glick Libarary.
 type Config struct {
-	API    string   // must already exist
-	Action string   // must be unique within the API
-	Type   string   // "RPC","PIE","CMD","URL"
-	JSON   bool     // should the RPC use JSON rather than GOB encoding, ignored for "CMD"
-	Method string   // the service method to use in the RPC, ignored for "CMD"
-	Static bool     // only used by "URL" to signal a static address
-	Path   string   // path to the local command or end-point for "RPC" or "URL"
-	Args   []string // only used by "CMD", command line arguments
+	API    string   // must already exist.
+	Action string   // must be unique within the API.
+	Type   string   // the type of plugin, e.g. "RPC","URL","CMD"...
+	JSON   bool     // should the plugin use JSON rather than GOB encoding, if relavent.
+	Method string   // the service method to use in the plugin, if relavent.
+	Static bool     // only used by "URL" to signal a static address.
+	Path   string   // path to the local command or end-point for "RPC" or "URL".
+	Args   []string // only used by "CMD", command line arguments.
 }
 
-// Configurator allows plug-in fuctionality to the Config process.
+// Configurator is a type of function that allows plug-in fuctionality to the Config process.
 type Configurator func(lib *Library, line int, cfg *Config) error
 
 // AddConfigurator adds a type of configuration to the library.
