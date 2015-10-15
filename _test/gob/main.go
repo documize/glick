@@ -5,7 +5,7 @@ import (
 
 	"github.com/natefinch/pie"
 
-	"documize/pif/test"
+	test "github.com/documize/glick/_test"
 )
 
 func main() {

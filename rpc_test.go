@@ -1,8 +1,6 @@
 package glick_test
 
 import (
-	"fmt"
-	"math/rand"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
@@ -28,9 +26,8 @@ func TestRPC(t *testing.T) {
 
 	for i := 0; i < 2; i++ {
 
-		endPt := "127.0.0.1:"
-		rand.Seed(time.Now().UnixNano())
-		endPt += fmt.Sprintf("%d", rand.Intn(9000)+1000)
+		endPt := "localhost:808"
+		endPt += string('8' + i)
 
 		var up sync.WaitGroup
 		up.Add(1)

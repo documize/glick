@@ -82,7 +82,7 @@ func servermain() {
 	http.Handle("/uppercase", uppercaseHandler)
 	http.Handle("/lowercase", lowercaseHandler)
 	http.Handle("/count", countHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
 
 func makeUppercaseEndpoint(svc StringService) endpoint.Endpoint {
@@ -146,6 +146,8 @@ var ErrEmpty = errors.New("empty string")
 
 func TestGoKitStringsvc1(t *testing.T) {
 	go servermain()
+
+	<-time.After(2 * time.Second)
 
 	l := glick.New(nil)
 	if err := glkit.ConfigKit(l); err != nil {
