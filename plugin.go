@@ -41,9 +41,10 @@ type plugkey struct {
 }
 type plugmap map[plugkey]Plugger
 type apidef struct {
-	ppi     interface{}
-	ppo     ProtoPlugOut
-	timeout time.Duration
+	ppi        interface{}
+	ppo        ProtoPlugOut
+	ppiT, ppoT reflect.Type
+	timeout    time.Duration
 }
 type apimap map[string]apidef
 type cfgmap map[string]Configurator
@@ -58,7 +59,7 @@ type Library struct {
 }
 
 // New returns an initialized Library.
-func New(ov Overloader) *Library {
+func New(ov Overloader) (*Library, error) {
 	lib := &Library{
 		apim: make(apimap),
 		pim:  make(plugmap),
@@ -66,15 +67,15 @@ func New(ov Overloader) *Library {
 		ovfn: ov,
 	}
 	if err := ConfigCmd(lib); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := ConfigGetURL(lib); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := ConfigRPC(lib); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return lib
+	return lib, nil
 }
 
 // RegAPI allows registration of a named API.
@@ -89,7 +90,9 @@ func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto Proto
 	if _, found := l.apim[api]; found {
 		return ErrDupAPI
 	}
-	l.apim[api] = apidef{inPrototype, outPlugProto, timeout}
+	l.apim[api] = apidef{inPrototype, outPlugProto,
+		reflect.TypeOf(inPrototype), reflect.TypeOf(outPlugProto()),
+		timeout}
 	return nil
 }
 
@@ -121,8 +124,7 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 	}
 	def, ok := l.apim[api]
 	if ok {
-		// TODO optimise?
-		if !reflect.TypeOf(in).AssignableTo(reflect.TypeOf(def.ppi)) {
+		if !reflect.TypeOf(in).AssignableTo(def.ppiT) {
 			return nil, fmt.Errorf("bad api types - in: got %T want %T",
 				in, def.ppi)
 		}
@@ -165,8 +167,7 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 		return nil, ctxWT.Err()
 	case plo := <-reply:
 		if plo.err == nil && (plo.out == nil ||
-			!reflect.TypeOf(plo.out).AssignableTo(
-				reflect.TypeOf(def.ppo()))) { // TODO optimize?
+			!def.ppoT.AssignableTo(reflect.TypeOf(plo.out))) {
 			return nil, fmt.Errorf("bad api type - out: got %T want %T",
 				plo.out, def.ppo())
 		}

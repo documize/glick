@@ -26,7 +26,7 @@ func PluginGetURL(static bool, uri string, model interface{}) Plugger {
 		if static {
 			ins = uri
 		}
-		resp, err := ctxhttp.Get(ctx, http.DefaultClient, ins)
+		resp, err := ctxhttp.Get(ctx, http.DefaultClient, ins) // handles context.Done() correctly
 		if err != nil {
 			return nil, err
 		}

@@ -9,7 +9,10 @@ import (
 )
 
 func cmdSwitchTest(t *testing.T, useJSON bool) {
-	l := glick.New(nil)
+	l, errN := glick.New(nil)
+	if errN != nil {
+		t.Error(errN)
+	}
 	var proto string
 	outProto := func() interface{} { var s string; return interface{}(&s) }
 	if err := l.RegAPI("string/&string", proto, outProto, 10*time.Second); err != nil {

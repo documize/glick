@@ -8,7 +8,10 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	l := glick.New(nil)
+	l, ne := glick.New(nil)
+	if ne != nil {
+		t.Error(ne)
+	}
 	if err := l.Config([]byte("±§~`-=_+")); err == nil {
 		t.Error("did not error on rubbish")
 	}
@@ -61,8 +64,8 @@ func TestConfig(t *testing.T) {
 	}
 	if err := l.Config([]byte(`[
 {"API":"test","Action":"intStr3","Type":"RPC","Path":"localhost:4242","Method":"foo.bar"}
-		]`)); err != nil {
-		t.Error(err)
+		]`)); err == nil {
+		t.Error("non-existant endPoint not spotted")
 	}
 	if err := l.Config([]byte(`[
 {"API":"test","Action":"intStr4","Type":"RPC","Path":"foo;;:4242"}

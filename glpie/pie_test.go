@@ -11,7 +11,10 @@ import (
 )
 
 func pieSwitchTest(t *testing.T, useJSON bool) {
-	l := glick.New(nil)
+	l, nerr := glick.New(nil)
+	if nerr != nil {
+		t.Error(nerr)
+	}
 	if err := glpie.ConfigPIE(l); err != nil {
 		t.Error(err)
 		return
@@ -43,9 +46,9 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		t.Error(err)
 		return
 	}
-	cmdPath := "../_test/gob/gob"
+	cmdPath := "./_test/gob/gob"
 	if useJSON {
-		cmdPath = "../_test/json/json"
+		cmdPath = "./_test/json/json"
 	}
 	if err := l.RegPlugin(api, act,
 		glpie.PluginPie(useJSON, "CI.CopyIntX", cmdPath, nil, tisOut)); err != nil {
@@ -66,7 +69,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		t.Error("over-long pie plugin did not timeout")
 	}
 	if err := l.RegPlugin(api, act+"bad",
-		glpie.PluginPie(true, "CI.CopyIntX", "../_test/bad/bad", nil, tisOut)); err != nil {
+		glpie.PluginPie(true, "CI.CopyIntX", "./_test/bad/bad", nil, tisOut)); err != nil {
 		t.Error("unable to create " + err.Error())
 		return
 	}
@@ -75,7 +78,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		t.Error("bad pie plugin did not error")
 	}
 	if err := l.RegPlugin(api, act+"badder",
-		glpie.PluginPie(true, "CI.CopyIntX", "../_test/bad/main.go", nil, tisOut)); err != nil {
+		glpie.PluginPie(true, "CI.CopyIntX", "./_test/bad/main.go", nil, tisOut)); err != nil {
 		t.Error("unable to create " + err.Error())
 		return
 	}
@@ -84,7 +87,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		t.Error("non-runnable bad pie plugin did not error")
 	}
 	if err := l.Config([]byte(`[
-{"API":"` + api + `","Action":"intStr1","Type":"PIE","Path":"../_test/gob/gob","Method":"CI.CopyIntX"}
+{"API":"` + api + `","Action":"intStr1","Type":"PIE","Path":"./_test/gob/gob","Method":"CI.CopyIntX"}
 		]`)); err != nil {
 		t.Error(err)
 	}

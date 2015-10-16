@@ -2,6 +2,7 @@ package glick_test
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -11,7 +12,10 @@ import (
 )
 
 func TestAPI(t *testing.T) {
-	l := glick.New(nil)
+	l, nerr := glick.New(nil)
+	if nerr != nil {
+		t.Error(nerr)
+	}
 	if err := l.RegAPI("z", nil, nil, time.Second); err != glick.ErrNilAPI {
 		t.Error("does not return nil api error")
 	}
@@ -38,7 +42,10 @@ func Simp(ctx context.Context, in interface{}) (out interface{}, err error) {
 func outSimp() interface{} { var i int; return interface{}(&i) }
 
 func TestSimple(t *testing.T) {
-	l := glick.New(nil)
+	l, nerr := glick.New(nil)
+	if nerr != nil {
+		t.Error(nerr)
+	}
 	api := "S"
 	var i int
 	if err := l.RegPlugin("unknown", "Test", Simp); err != glick.ErrNoAPI {
@@ -58,10 +65,24 @@ func TestSimple(t *testing.T) {
 			t.Error("called plugin did not work")
 		}
 	}
+
+	if ppo, err := l.ProtoPlugOut(api); err == nil {
+		if reflect.TypeOf(ppo()) != reflect.TypeOf(outSimp()) {
+			t.Error("wrong proto type")
+		}
+	} else {
+		t.Error(err)
+	}
+	if _, err := l.ProtoPlugOut("Sinbad"); err == nil {
+		t.Error("no error for non-existant api")
+	}
 }
 
 func TestDup(t *testing.T) {
-	l := glick.New(nil)
+	l, nerr := glick.New(nil)
+	if nerr != nil {
+		t.Error(nerr)
+	}
 	var d struct{}
 	if er0 := l.RegAPI("A", d,
 		func() interface{} { var s struct{}; return interface{}(&s) },
@@ -119,7 +140,7 @@ func outJustBad() interface{} {
 
 func TestOverloader(t *testing.T) {
 	hadOvStub := Tov
-	l := glick.New(func(ctx context.Context, api, act string, handler glick.Plugger) (context.Context, glick.Plugger, error) {
+	l, nerr := glick.New(func(ctx context.Context, api, act string, handler glick.Plugger) (context.Context, glick.Plugger, error) {
 		if api == "abc" && act == "meaning-of-life" {
 			return ctx, hadOvStub, nil
 		}
@@ -128,6 +149,9 @@ func TestOverloader(t *testing.T) {
 		}
 		return ctx, nil, nil
 	})
+	if nerr != nil {
+		t.Error(nerr)
+	}
 	var prototype int
 	if err := l.RegAPI("abc", prototype,
 		func() interface{} { var b bool; return interface{}(&b) },

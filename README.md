@@ -26,6 +26,6 @@ The package "glick/glkit" provides an interface to and relies upon:
 
 ## Testing
 
-In order to run the tests, server counterpart executables need to be built. "test/build_tests.sh" provides a bash script for doing this, it must be run from the directory it is in.
+In order to run the tests for the "glick/glpie" the server counterpart executables need to be built. "glick/glpie/_test/build_tests.sh" provides a bash script for doing this, it must be run from the directory it is in.
 
 The code has only been tested on OSX & Ubuntu.

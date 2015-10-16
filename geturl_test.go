@@ -10,7 +10,10 @@ import (
 func TestGetURL(t *testing.T) {
 	outProtoString := func() interface{} { var s string; return interface{}(&s) }
 	outProtoInt := func() interface{} { var i int; return interface{}(&i) }
-	l := glick.New(nil)
+	l, nerr := glick.New(nil)
+	if nerr != nil {
+		t.Error(nerr)
+	}
 	proto := ""
 	if err := l.RegAPI("string/*string", proto, outProtoString, 2*time.Second); err != nil {
 		t.Error(err)

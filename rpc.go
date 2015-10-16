@@ -22,18 +22,18 @@ func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) P
 	if reflect.TypeOf(ppo()).Kind() != reflect.Ptr {
 		return nil
 	}
+	var client *rpc.Client
+	var errDial error
+	if useJSON {
+		client, errDial = jsonrpc.Dial("tcp", endPoint)
+	} else {
+		client, errDial = rpc.Dial("tcp", endPoint)
+	}
+	if errDial != nil {
+		return nil
+	}
 	return func(ctx context.Context, in interface{}) (out interface{}, err error) {
 		out = ppo()
-		var client *rpc.Client
-		if useJSON {
-			client, err = jsonrpc.Dial("tcp", endPoint)
-		} else {
-			client, err = rpc.Dial("tcp", endPoint)
-		}
-		if err != nil {
-			return nil, err
-		}
-		defer client.Close()
 		err = client.Call(serviceMethod, in, out)
 		return
 	}

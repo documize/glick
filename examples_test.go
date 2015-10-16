@@ -2,6 +2,7 @@ package glick_test
 
 import (
 	"fmt"
+	"log"
 	"testing"
 	"time"
 
@@ -24,25 +25,28 @@ func Example() {
 		return ctx, handler, nil
 	}
 
-	lib := glick.New(runtimeRerouter)
+	lib, nerr := glick.New(runtimeRerouter)
+	if nerr != nil {
+		log.Panic(nerr)
+	}
 
 	timeNowAPIproto := ""
 	if err := lib.RegAPI("timeNow", timeNowAPIproto,
 		func() interface{} { return timeNowAPIproto },
 		time.Second); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	// the set-up version of the plugin, in Go
 	if err := lib.RegPlugin("timeNow", "lookup", goDatePlugin); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	ctx := context.Background()
 
 	lookup := func() {
 		if S, err := lib.Run(ctx, "timeNow", "lookup", ""); err != nil {
-			panic(err)
+			log.Panic(err)
 		} else {
 			fmt.Println(S)
 		}

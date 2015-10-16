@@ -61,7 +61,10 @@ func TestRPC(t *testing.T) {
 			useJSON = true
 		}
 
-		l := glick.New(nil)
+		l, nerr := glick.New(nil)
+		if nerr != nil {
+			t.Error(nerr)
+		}
 
 		api := "ab"
 		act := "cdef"
@@ -105,8 +108,8 @@ func TestRPC(t *testing.T) {
 			t.Error("did not error on bad end-point")
 		}
 		if err := l.RegPlugin(api, "errEP",
-			glick.PluginRPC(useJSON, "CI.CopyIntX", "localhost:9999", tisOut)); err != nil {
-			t.Error(err)
+			glick.PluginRPC(useJSON, "CI.CopyIntX", "localhost:9999", tisOut)); err == nil {
+			t.Error("did not error on duff endpoint")
 			return
 		}
 		if _, err := l.Run(nil, api, "errEP", par); err == nil {

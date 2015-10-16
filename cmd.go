@@ -2,39 +2,62 @@ package glick
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os/exec"
+	"runtime"
 	"sync"
 
 	"golang.org/x/net/context"
 )
 
+var cmdmtx sync.Mutex // ensure we only run one command at a time, across the system
+
 // PluginCmd only works with an api with a simple Text/Text signature.
 // it runs the given operating system command using the input string
 // as stdin and putting stdout into the output string.
+// At present, to limit stress on system resources,
+// only one os command can run at a time via this plugin sub-system.
 func PluginCmd(cmdPath string, args []string, model interface{}) Plugger {
-	var mtx sync.Mutex // ensure we only run one command at a time
 	cmdPath, e := exec.LookPath(cmdPath)
 	if e != nil {
 		return nil
 	}
 	return func(ctx context.Context, in interface{}) (interface{}, error) {
 		var err error
-		mtx.Lock()
-		defer mtx.Unlock()
+		cmdmtx.Lock()
+		defer cmdmtx.Unlock()
 		ecmd := exec.Command(cmdPath, args...)
 		ecmd.Stdin, err = TextReader(in)
 		if err != nil {
 			return nil, err
 		}
 		var outBuf, errBuf bytes.Buffer
-		ecmd.Stdout = &outBuf
-		ecmd.Stderr = &errBuf
-		err = ecmd.Run()
+		ecmd.Stdout, ecmd.Stderr = &outBuf, &errBuf
+		err = ecmd.Start()
 		if err != nil {
 			return nil, err
 		}
-		return TextConvert(outBuf.Bytes(), model)
+		over := make(chan error, 1)
+		go func() {
+			over <- ecmd.Wait()
+		}()
+		select {
+		case err = <-over:
+			if err != nil {
+				return nil, err
+			}
+			return TextConvert(outBuf.Bytes(), model)
+		case <-ctx.Done():
+			ke := ""
+			if runtime.GOOS != "windows" { // Process is not available on windows
+				err = ecmd.Process.Kill()
+				if err != nil {
+					ke = ", kill error: " + err.Error()
+				}
+			}
+			return nil, errors.New("Cmd cancelled via context" + ke)
+		}
 	}
 }
 

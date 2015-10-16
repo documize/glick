@@ -19,6 +19,75 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 )
 
+func TestGoKitStringsvc1(t *testing.T) {
+	go servermain()
+
+	<-time.After(2 * time.Second)
+
+	l, nerr := glick.New(nil)
+	if nerr != nil {
+		t.Error(nerr)
+	}
+
+	if err := glkit.ConfigKit(l); err != nil {
+		t.Error(err)
+	}
+	if err := l.RegAPI("uppercase", uppercaseRequest{},
+		func() interface{} { return &uppercaseResponse{} }, time.Second); err != nil {
+		t.Error(err)
+	}
+	if err := l.Config([]byte(`[
+{"API":"uppercase","Action":"uc","Type":"KIT","Path":"http://localhost:8080/uppercase","JSON":true},
+{"API":"uppercase","Action":"lc","Type":"KIT","Path":"http://localhost:8080/lowercase","JSON":true}
+		]`)); err != nil {
+		t.Error(err)
+	}
+	if rep, err := l.Run(nil, "uppercase", "uc", uppercaseRequest{S: "abc"}); err == nil {
+		if rep.(*uppercaseResponse).V != "ABC" {
+			t.Error("uppercase did not work")
+		}
+	} else {
+		t.Error(err)
+	}
+	if rep, err := l.Run(nil, "uppercase", "lc", uppercaseRequest{S: "XYZ"}); err == nil {
+		if rep.(*uppercaseResponse).V != "xyz" {
+			t.Error("lowercase did not work")
+		}
+	} else {
+		t.Error(err)
+	}
+	if err := l.Config([]byte(`[
+{"API":"uppercase","Action":"uc","Type":"KIT","Path":"http://localhost:8080/uppercase"}
+		]`)); err == nil {
+		t.Error("did not spot non-JSON")
+	}
+
+	// use the more direct method for count
+	count := glkit.PluginKitJSONoverHTTP("http://localhost:8080/count",
+		func() interface{} { return &countResponse{} })
+	cc, ecc := count(nil, countRequest{S: "abc"})
+	if ecc != nil {
+		t.Error(ecc)
+	}
+	if cc.(*countResponse).V != 3 {
+		t.Error("count did not work")
+	}
+}
+
+func TestAssignFn(t *testing.T) {
+	var glp glick.Plugger
+	var kep endpoint.Endpoint
+
+	x := func(c context.Context, i interface{}) (interface{}, error) {
+		return nil, nil
+	}
+
+	glp = x
+	kep = x
+	glp = glick.Plugger(kep)
+	kep = endpoint.Endpoint(glp)
+}
+
 // example below modified from https://github.com/go-kit/kit/blob/master/examples/stringsvc1/main.go
 
 // StringService provides operations on strings.
@@ -41,7 +110,10 @@ func (stringService) Count(s string) int {
 }
 
 func servermain() {
-	lib := glick.New(nil)
+	lib, nerr := glick.New(nil)
+	if nerr != nil {
+		panic(nerr)
+	}
 	if err := lib.RegAPI("api", uppercaseRequest{},
 		func() interface{} { return uppercaseResponse{} }, time.Second); err != nil {
 		panic(err)
@@ -143,68 +215,3 @@ type countResponse struct {
 
 // ErrEmpty is returned when an input string is empty.
 var ErrEmpty = errors.New("empty string")
-
-func TestGoKitStringsvc1(t *testing.T) {
-	go servermain()
-
-	<-time.After(2 * time.Second)
-
-	l := glick.New(nil)
-	if err := glkit.ConfigKit(l); err != nil {
-		t.Error(err)
-	}
-	if err := l.RegAPI("uppercase", uppercaseRequest{},
-		func() interface{} { return &uppercaseResponse{} }, time.Second); err != nil {
-		t.Error(err)
-	}
-	if err := l.Config([]byte(`[
-{"API":"uppercase","Action":"uc","Type":"KIT","Path":"http://localhost:8080/uppercase","JSON":true},
-{"API":"uppercase","Action":"lc","Type":"KIT","Path":"http://localhost:8080/lowercase","JSON":true}
-		]`)); err != nil {
-		t.Error(err)
-	}
-	if rep, err := l.Run(nil, "uppercase", "uc", uppercaseRequest{S: "abc"}); err == nil {
-		if rep.(*uppercaseResponse).V != "ABC" {
-			t.Error("uppercase did not work")
-		}
-	} else {
-		t.Error(err)
-	}
-	if rep, err := l.Run(nil, "uppercase", "lc", uppercaseRequest{S: "XYZ"}); err == nil {
-		if rep.(*uppercaseResponse).V != "xyz" {
-			t.Error("lowercase did not work")
-		}
-	} else {
-		t.Error(err)
-	}
-	if err := l.Config([]byte(`[
-{"API":"uppercase","Action":"uc","Type":"KIT","Path":"http://localhost:8080/uppercase"}
-		]`)); err == nil {
-		t.Error("did not spot non-JSON")
-	}
-
-	// use the more direct method for count
-	count := glkit.PluginKitJSONoverHTTP("http://localhost:8080/count",
-		func() interface{} { return &countResponse{} })
-	cc, ecc := count(nil, countRequest{S: "abc"})
-	if ecc != nil {
-		t.Error(ecc)
-	}
-	if cc.(*countResponse).V != 3 {
-		t.Error("count did not work")
-	}
-}
-
-func TestAssignFn(t *testing.T) {
-	var glp glick.Plugger
-	var kep endpoint.Endpoint
-
-	x := func(c context.Context, i interface{}) (interface{}, error) {
-		return nil, nil
-	}
-
-	glp = x
-	kep = x
-	glp = glick.Plugger(kep)
-	kep = endpoint.Endpoint(glp)
-}
