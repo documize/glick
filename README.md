@@ -1,4 +1,4 @@
-Versatile plugin framework for Go
+## Versatile plugin framework for Go
 
 This repository contains the "glick" plug-in framework, which is a work-in-progress.
 
