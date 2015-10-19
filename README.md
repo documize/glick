@@ -35,6 +35,6 @@ The package "glick/glkit" provides an interface to [go-kit](http://gokit.io)  an
 
 ## Testing
 
-In order to run the tests for the "glick/glpie" the server counterpart executables need to be built. "glick/glpie/_test/build_tests.sh" provides a bash script for doing this, it must be run from the directory it is in.
+In order to run the tests for the "glick/glpie" sub-package the server counterpart executables need to be built. "glick/glpie/_test/build_tests.sh" provides a bash script for doing this, it must be run from the directory it is in.
 
 The code has only been tested on OSX & Ubuntu.
