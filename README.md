@@ -12,7 +12,7 @@ The key features of Glick are:
 
 Plugin code can run:
 - within the application;
-- as a sub-process (either simple or [structured as an RPC](https://github.com/natefinch/pie));
+- as a sub-process, either simple or [structured as an RPC](https://github.com/natefinch/pie);
 - or remotely via: simple URL get, standard go RPC, via [go-kit](http://gokit.io) or using [gRPC](http://www.grpc.io/) (with more to come). 
 
 For a more detailed overivew of the package see: doc.go 

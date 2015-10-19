@@ -1,5 +1,7 @@
 package test
 
+// This file is imported by many of the tests as a way to create a simple RPC method
+
 import (
 	"errors"
 	"time"
