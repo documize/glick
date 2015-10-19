@@ -18,7 +18,7 @@ var cmdmtx sync.Mutex // ensure we only run one command at a time, across the sy
 // as stdin and putting stdout into the output string.
 // At present, to limit stress on system resources,
 // only one os command can run at a time via this plugin sub-system.
-func PluginCmd(cmdPath string, args []string, model interface{}) Plugger {
+func PluginCmd(cmdPath string, args []string, model interface{}) Plugin {
 	cmdPath, e := exec.LookPath(cmdPath)
 	if e != nil {
 		return nil

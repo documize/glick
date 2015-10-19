@@ -11,7 +11,7 @@ import (
 
 // PluginGetURL fetches the content of a URL, which could be static or dynamic (passed in).
 // It only works with an api with a simple Text/Text signature.
-func PluginGetURL(static bool, uri string, model interface{}) Plugger {
+func PluginGetURL(static bool, uri string, model interface{}) Plugin {
 	if static {
 		if uri == "" {
 			return nil
@@ -30,8 +30,11 @@ func PluginGetURL(static bool, uri string, model interface{}) Plugger {
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
 		byts, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err // unable to create a simple test case for this error
+		}
+		err = resp.Body.Close()
 		if err != nil {
 			return nil, err // unable to create a simple test case for this error
 		}

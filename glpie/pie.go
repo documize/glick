@@ -55,9 +55,12 @@ func (p *pi) plugin(ctx context.Context, in, out interface{}) error {
 }
 
 // PluginPie enables plugin commands created using github.com/natefinch/pie.
-func PluginPie(useJSON bool, serviceMethod, cmdPath string, args []string, ppo glick.ProtoPlugOut) glick.Plugger {
+func PluginPie(useJSON bool, serviceMethod, cmdPath string, args []string, ppo glick.ProtoPlugOut) glick.Plugin {
 	f, e := os.Open(cmdPath)
-	defer f.Close()
+	if e != nil {
+		return nil
+	}
+	e = f.Close()
 	if e != nil {
 		return nil
 	}

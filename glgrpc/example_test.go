@@ -127,10 +127,6 @@ func ExampleGRPChw() {
  *
  */
 
-const (
-	port = ":50051"
-)
-
 // server is used to implement hellowrld.GreeterServer.
 type server struct{}
 
@@ -140,11 +136,14 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 func servermain() {
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", address)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("failed to Listen: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterGreeterServer(s, &server{})
-	s.Serve(lis)
+	err = s.Serve(lis)
+	if err != nil {
+		log.Fatalf("failed to Serve: %v", err)
+	}
 }

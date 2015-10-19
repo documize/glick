@@ -140,7 +140,7 @@ func outJustBad() interface{} {
 
 func TestOverloader(t *testing.T) {
 	hadOvStub := Tov
-	l, nerr := glick.New(func(ctx context.Context, api, act string, handler glick.Plugger) (context.Context, glick.Plugger, error) {
+	l, nerr := glick.New(func(ctx context.Context, api, act string, handler glick.Plugin) (context.Context, glick.Plugin, error) {
 		if api == "abc" && act == "meaning-of-life" {
 			return ctx, hadOvStub, nil
 		}

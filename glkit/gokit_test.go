@@ -75,7 +75,7 @@ func TestGoKitStringsvc1(t *testing.T) {
 }
 
 func TestAssignFn(t *testing.T) {
-	var glp glick.Plugger
+	var glp glick.Plugin
 	var kep endpoint.Endpoint
 
 	x := func(c context.Context, i interface{}) (interface{}, error) {
@@ -84,7 +84,7 @@ func TestAssignFn(t *testing.T) {
 
 	glp = x
 	kep = x
-	glp = glick.Plugger(kep)
+	glp = glick.Plugin(kep)
 	kep = endpoint.Endpoint(glp)
 }
 

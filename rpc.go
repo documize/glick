@@ -12,7 +12,7 @@ import (
 
 // PluginRPC returns a type which implements the Plugger interface for making an RPC.
 // The return type of this class of plugin must be a pointer.
-func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) Plugger {
+func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) Plugin {
 	if endPoint == "" || serviceMethod == "" {
 		return nil
 	}

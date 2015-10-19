@@ -35,7 +35,7 @@ func MakeEndpoint(l *glick.Library, api, action string) endpoint.Endpoint {
 
 // PluginKitJSONoverHTTP enables calls to plugin commands
 // implemented as microservices using "gokit.io".
-func PluginKitJSONoverHTTP(cmdPath string, ppo glick.ProtoPlugOut) glick.Plugger {
+func PluginKitJSONoverHTTP(cmdPath string, ppo glick.ProtoPlugOut) glick.Plugin {
 	return func(ctx context.Context, in interface{}) (out interface{}, err error) {
 		var j, b []byte
 		var r *http.Response
@@ -60,7 +60,7 @@ func PluginKitJSONoverHTTP(cmdPath string, ppo glick.ProtoPlugOut) glick.Plugger
 func ConfigKit(lib *glick.Library) error {
 	return lib.AddConfigurator("KIT", func(l *glick.Library, line int, cfg *glick.Config) error {
 		ppo, err := l.ProtoPlugOut(cfg.API)
-		if err != nil {
+		if err != nil { // internal error, simple test case impossible
 			return fmt.Errorf(
 				"entry %d Go-Kit plugin error for api: %s action: %s error: %s",
 				line, cfg.API, cfg.Action, err)
@@ -71,6 +71,7 @@ func ConfigKit(lib *glick.Library) error {
 				line)
 		}
 		if err := l.RegPlugin(cfg.API, cfg.Action, PluginKitJSONoverHTTP(cfg.Path, ppo)); err != nil {
+			// internal error, simple test case impossible
 			return fmt.Errorf("entry %d Go-Kit register plugin error: %v",
 				line, err)
 		}

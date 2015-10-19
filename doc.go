@@ -6,7 +6,7 @@
 // for example a file conversion API may have one action for each of
 // the file formats to be convereted.
 // Using the Run() method of glick.Library, a given API/Action combination
-// runs the code in a plugin function (of type Plugger).
+// runs the code in a function of Go type Plugin.
 //
 // Although it is easy to create your own plugins,
 // there are three types built-in: Remote Procedure Calls (RPC),
@@ -18,15 +18,15 @@
 //
 // 1) Intialisation and set-up code for the application will establish
 // the glick.Library using glick.New(), then add API specifications using
-// RegAPI(), it may also add the application's standard plugins using RegPlugin().
+// RegAPI(), it may also add the application's base plugins using RegPlugin().
 //
-// 2) The base set-up can be overloaded using a JSON format configuration
+// 2) The base set-up can be extended and overloaded using a JSON format configuration
 // description (probaly held in a file) by calling the Config() method of
 // glick.Library. This configuration process is extensible,
 // using the AddConfigurator() method - see the glick/glpie or glick/glkit
 // sub-pakages for examples.
 //
-// 3) Which plugin to use can also be overloaded at runtime within Run(). Each call to
+// 3) Which plugin to use can also be set-up or overloaded at runtime within Run(). Each call to
 // a plugin includes a Context (as described in https://blog.golang.org/context).
 // This context can contain for example user details, which could be matched
 // against a database to see if that user should be directed to one plugin

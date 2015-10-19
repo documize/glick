@@ -16,7 +16,7 @@ func Example() {
 		return time.Now().String(), nil
 	}
 
-	runtimeRerouter := func(ctx context.Context, api, action string, handler glick.Plugger) (context.Context, glick.Plugger, error) {
+	runtimeRerouter := func(ctx context.Context, api, action string, handler glick.Plugin) (context.Context, glick.Plugin, error) {
 		// if we hit a particular set of circumstances return the go version
 		if ctx.Value("bingo") != nil && api == "timeNow" && action == "lookup" {
 			return ctx, goDatePlugin, nil

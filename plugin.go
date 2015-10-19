@@ -21,9 +21,9 @@ var (
 	ErrNoPlug = errors.New("no plugin found")
 )
 
-// Plugger provides a way to call plugins,
-// it has the same design as Endpoint in "github.com/go-kit/kit".
-type Plugger func(ctx context.Context, in interface{}) (out interface{}, err error)
+// Plugin type provides the type of the every plugin function,
+// it has the same signature as Endpoint in "github.com/go-kit/kit".
+type Plugin func(ctx context.Context, in interface{}) (out interface{}, err error)
 
 // ProtoPlugOut provides a prototype for the output of a Plugger
 type ProtoPlugOut func() interface{}
@@ -35,27 +35,27 @@ type plugOut struct {
 
 // Overloader allows the standard system settings for an API
 // to be overloaded, depending on the context passed in.
-type Overloader func(ctx context.Context, api, action string, handler Plugger) (context.Context, Plugger, error)
+type Overloader func(ctx context.Context, api, action string, handler Plugin) (context.Context, Plugin, error)
 type plugkey struct {
-	api, action string
+	api, action string // the strings to choose a plugin
 }
-type plugmap map[plugkey]Plugger
+type plugmap map[plugkey]Plugin // how tp
 type apidef struct {
-	ppi        interface{}
-	ppo        ProtoPlugOut
-	ppiT, ppoT reflect.Type
-	timeout    time.Duration
+	ppi        interface{}   // a prototype of the input type
+	ppo        ProtoPlugOut  // a function returning a prototype of the output type
+	ppiT, ppoT reflect.Type  // a cached version of reflect.TypeOf the input and output types
+	timeout    time.Duration // how long before we abort
 }
 type apimap map[string]apidef
 type cfgmap map[string]Configurator
 
 // Library holds the registered API and plugin database.
 type Library struct {
-	pim  plugmap
-	apim apimap
-	cfgm cfgmap
-	mtx  sync.RWMutex // mutex is for map access
-	ovfn Overloader
+	pim  plugmap      // a map of known plugins
+	apim apimap       // a map of known APIs
+	cfgm cfgmap       // a map of know configuration handlers
+	mtx  sync.RWMutex // mutex to protect map access
+	ovfn Overloader   // the function to call to overload which plugin to use at runtime
 }
 
 // New returns an initialized Library.
@@ -98,7 +98,7 @@ func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto Proto
 
 // RegPlugin registers a Plugger to use for this action on an api.
 // Duplicate actions simply overload what is there.
-func (l *Library) RegPlugin(api, action string, handler Plugger) error {
+func (l *Library) RegPlugin(api, action string, handler Plugin) error {
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	if _, hasAPI := l.apim[api]; !hasAPI {
@@ -140,7 +140,7 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 
 	// should this run call and overload function?
 	if l.ovfn != nil {
-		var ovHandler Plugger
+		var ovHandler Plugin
 		var ovErr error
 		ctx, ovHandler, ovErr = l.ovfn(ctx, api, action, handler)
 		if ovErr != nil {
