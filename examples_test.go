@@ -38,7 +38,7 @@ func Example() {
 	}
 
 	// the set-up version of the plugin, in Go
-	if err := lib.RegPlugin("timeNow", "lookup", goDatePlugin); err != nil {
+	if err := lib.RegPlugin("timeNow", "lookup", goDatePlugin, nil); err != nil {
 		log.Panic(err)
 	}
 
@@ -55,8 +55,8 @@ func Example() {
 	lookup() // should run the go version
 
 	// now overload an os version of timeNow/lookup via a JSON config
-	if err := lib.Config([]byte(`[
-{"API":"timeNow","Action":"lookup","Type":"CMD","Path":"date"}
+	if err := lib.Configure([]byte(`[
+{"API":"timeNow","Actions":["lookup"],"Type":"CMD","Path":"date"}
 		]`)); err != nil {
 		panic(err)
 	}

@@ -48,14 +48,14 @@ func TestSimple(t *testing.T) {
 	}
 	api := "S"
 	var i int
-	if err := l.RegPlugin("unknown", "Test", Simp); err != glick.ErrNoAPI {
+	if err := l.RegPlugin("unknown", "Test", Simp, nil); err != glick.ErrNoAPI {
 		t.Error("register plugin does not give unknown API error")
 	}
 	if err := l.RegAPI(api, i, outSimp, time.Second); err != nil {
 		t.Error(err)
 		return
 	}
-	if er1 := l.RegPlugin(api, "Test", Simp); er1 != nil {
+	if er1 := l.RegPlugin(api, "Test", Simp, nil); er1 != nil {
 		t.Error("register gives error", er1)
 	}
 	if ret, err := l.Run(nil, api, "Test", 42); err != nil {
@@ -89,10 +89,10 @@ func TestDup(t *testing.T) {
 		time.Second); er0 != nil {
 		t.Error("register API gives error")
 	}
-	if er1 := l.RegPlugin("A", "B", Simp); er1 != nil {
+	if er1 := l.RegPlugin("A", "B", Simp, nil); er1 != nil {
 		t.Error("first entry gives error")
 	}
-	er2 := l.RegPlugin("A", "B", Simp)
+	er2 := l.RegPlugin("A", "B", Simp, nil)
 	if er2 != nil {
 		t.Error("second entry should not give error")
 	}
@@ -159,7 +159,7 @@ func TestOverloader(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := l.RegPlugin("abc", "default", Def); err != nil {
+	if err := l.RegPlugin("abc", "default", Def, nil); err != nil {
 		t.Error(err)
 		return
 	}
@@ -177,7 +177,7 @@ func TestOverloader(t *testing.T) {
 			t.Error("Overloaded function not called")
 		}
 	}
-	if err := l.RegPlugin("abc", "bad", Def); err != nil {
+	if err := l.RegPlugin("abc", "bad", Def, nil); err != nil {
 		t.Error(err)
 		return
 	}
@@ -185,7 +185,7 @@ func TestOverloader(t *testing.T) {
 		t.Error("overloader should have errored")
 		return
 	}
-	if err := l.RegPlugin("abc", "forever", Forever); err != nil {
+	if err := l.RegPlugin("abc", "forever", Forever, nil); err != nil {
 		t.Error(err)
 		return
 	}
@@ -195,7 +195,7 @@ func TestOverloader(t *testing.T) {
 		t.Error("overloader should have errored")
 		return
 	}
-	if err := l.RegPlugin("abc", "justBad", JustBad); err != nil {
+	if err := l.RegPlugin("abc", "justBad", JustBad, nil); err != nil {
 		t.Error(err)
 		return
 	}

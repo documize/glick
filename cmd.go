@@ -69,9 +69,11 @@ func ConfigCmd(lib *Library) error {
 				line, cfg.API)
 		}
 		pi := PluginCmd(cfg.Path, cfg.Args, l.apim[cfg.API].ppo())
-		if err := l.RegPlugin(cfg.API, cfg.Action, pi); err != nil {
-			return fmt.Errorf("entry %d CMD register plugin error: %v",
-				line, err)
+		for _, action := range cfg.Actions {
+			if err := l.RegPlugin(cfg.API, action, pi, cfg); err != nil {
+				return fmt.Errorf("entry %d CMD register plugin error: %v",
+					line, err)
+			}
 		}
 		return nil
 	})
