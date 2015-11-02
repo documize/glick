@@ -2,7 +2,6 @@ package glick_test
 
 import (
 	"fmt"
-	"log"
 	"testing"
 	"time"
 
@@ -27,26 +26,29 @@ func Example() {
 
 	lib, nerr := glick.New(runtimeRerouter)
 	if nerr != nil {
-		log.Panic(nerr)
+		fmt.Println(nerr)
+		return
 	}
 
 	timeNowAPIproto := ""
 	if err := lib.RegAPI("timeNow", timeNowAPIproto,
 		func() interface{} { return timeNowAPIproto },
 		time.Second); err != nil {
-		log.Panic(err)
+		fmt.Println(err)
+		return
 	}
 
 	// the set-up version of the plugin, in Go
 	if err := lib.RegPlugin("timeNow", "lookup", goDatePlugin, nil); err != nil {
-		log.Panic(err)
+		fmt.Println(err)
+		return
 	}
 
 	ctx := context.Background()
 
 	lookup := func() {
 		if S, err := lib.Run(ctx, "timeNow", "lookup", ""); err != nil {
-			log.Panic(err)
+			fmt.Println(err)
 		} else {
 			fmt.Println(S)
 		}
@@ -58,7 +60,7 @@ func Example() {
 	if err := lib.Configure([]byte(`[
 {"API":"timeNow","Actions":["lookup"],"Type":"CMD","Path":"date"}
 		]`)); err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 
 	lookup() // should run the os command 'date' and print the output

@@ -25,6 +25,9 @@ type Configurator func(lib *Library, line int, cfg *Config) error
 
 // AddConfigurator adds a type of configuration to the library.
 func (l *Library) AddConfigurator(name string, cfg Configurator) error {
+	if l == nil {
+		return ErrNilLib
+	}
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	if _, exists := l.cfgm[name]; exists {
@@ -40,6 +43,9 @@ func (l *Library) AddConfigurator(name string, cfg Configurator) error {
 // Configure takes a JSON-encoded byte slice and configures the plugins for a library from it.
 // NOTE: duplicate actions overload earlier versions.
 func (l *Library) Configure(b []byte) error {
+	if l == nil {
+		return ErrNilLib
+	}
 	var m []Config
 	if err := json.Unmarshal(b, &m); err != nil {
 		return err

@@ -45,6 +45,9 @@ func PluginGetURL(static bool, uri string, model interface{}) Plugin {
 // ConfigGetURL provides the Configurator for the URL class of plugins that
 // fetch the content of URLs.
 func ConfigGetURL(lib *Library) error {
+	if lib == nil {
+		return ErrNilLib
+	}
 	return lib.AddConfigurator("URL", func(l *Library, line int, cfg *Config) error {
 		if !(IsText(l.apim[cfg.API].ppi) && IsText(l.apim[cfg.API].ppo())) {
 			return fmt.Errorf("entry %d API %s is not of simple type (string/*string) ",

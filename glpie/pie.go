@@ -75,6 +75,9 @@ func PluginPie(useJSON bool, serviceMethod, cmdPath string, args []string, ppo g
 
 // ConfigPIE provides the Configurator for the PIE class of plugin.
 func ConfigPIE(lib *glick.Library) error {
+	if lib == nil {
+		return glick.ErrNilLib
+	}
 	return lib.AddConfigurator("PIE", func(l *glick.Library, line int, cfg *glick.Config) error {
 		ppo, err := l.ProtoPlugOut(cfg.API)
 		if err != nil {

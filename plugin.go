@@ -12,6 +12,8 @@ import (
 )
 
 var (
+	// ErrNilLib means the library pointer is nil.
+	ErrNilLib = errors.New("nil library")
 	// ErrNilAPI means an API value is nil.
 	ErrNilAPI = errors.New("nil api")
 	// ErrDupAPI means that a duplicate name has been given for an API.
@@ -87,6 +89,9 @@ func New(ov Overloader) (*Library, error) {
 // The in/out prototype defines the type that must be passed in and out.
 // The timeout gives the maximum time that a Plugin using this API may take to execute.
 func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto ProtoPlugOut, timeout time.Duration) error {
+	if l == nil {
+		return ErrNilLib
+	}
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	if inPrototype == nil || outPlugProto == nil || outPlugProto() == nil {
@@ -104,6 +109,9 @@ func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto Proto
 // RegPlugin registers a Plugger to use for this action on an api.
 // Duplicate actions simply overload what is there.
 func (l *Library) RegPlugin(api, action string, handler Plugin, cfg *Config) error {
+	if l == nil {
+		return ErrNilLib
+	}
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	if _, hasAPI := l.apim[api]; !hasAPI {
@@ -120,6 +128,9 @@ func (l *Library) RegPlugin(api, action string, handler Plugin, cfg *Config) err
 // The library overloader function may decide from the context that a non-standard
 // action should be run.
 func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (out interface{}, err error) {
+	if l == nil {
+		return nil, ErrNilLib
+	}
 	l.mtx.RLock()
 	defer l.mtx.RUnlock()
 
@@ -186,6 +197,9 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 
 // ProtoPlugOut provides the way to return a function to create the output for a plugin.
 func (l *Library) ProtoPlugOut(api string) (ppo ProtoPlugOut, err error) {
+	if l == nil {
+		return nil, ErrNilLib
+	}
 	l.mtx.RLock()
 	defer l.mtx.RUnlock()
 	if v, ok := l.apim[api]; !ok {
@@ -198,6 +212,9 @@ func (l *Library) ProtoPlugOut(api string) (ppo ProtoPlugOut, err error) {
 
 // Actions provides the names of all registered plugin actions for an api.
 func (l *Library) Actions(api string) ([]string, error) {
+	if l == nil {
+		return nil, ErrNilLib
+	}
 	l.mtx.RLock()
 	defer l.mtx.RUnlock()
 	if _, ok := l.apim[api]; !ok {
@@ -216,6 +233,9 @@ func (l *Library) Actions(api string) ([]string, error) {
 // Config returns a pointer to the JSON Config struct for a given API and Action,
 // or nil if no Config exists.
 func (l *Library) Config(api, action string) *Config {
+	if l == nil {
+		return nil
+	}
 	l.mtx.RLock()
 	defer l.mtx.RUnlock()
 	return l.pim[plugkey{api, action}].cfg

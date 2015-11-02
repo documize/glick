@@ -40,6 +40,9 @@ func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) P
 
 // ConfigRPC provides the Configurator for the RPC class of plugin.
 func ConfigRPC(lib *Library) error {
+	if lib == nil {
+		return ErrNilLib
+	}
 	return lib.AddConfigurator("RPC", func(l *Library, line int, cfg *Config) error {
 		ppo := l.apim[cfg.API].ppo
 		pi := PluginRPC(cfg.JSON, cfg.Method, cfg.Path, ppo)

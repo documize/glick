@@ -63,6 +63,9 @@ func PluginCmd(cmdPath string, args []string, model interface{}) Plugin {
 
 // ConfigCmd provides the Configurator for plugins that run operating system commands.
 func ConfigCmd(lib *Library) error {
+	if lib == nil {
+		return ErrNilLib
+	}
 	return lib.AddConfigurator("CMD", func(l *Library, line int, cfg *Config) error {
 		if !(IsText(l.apim[cfg.API].ppi) && IsText(l.apim[cfg.API].ppo())) {
 			return fmt.Errorf("entry %d API %s is not of simple type (string/*string) ",

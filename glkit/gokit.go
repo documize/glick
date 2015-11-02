@@ -58,6 +58,9 @@ func PluginKitJSONoverHTTP(cmdPath string, ppo glick.ProtoPlugOut) glick.Plugin 
 
 // ConfigKit provides the Configurator for the GoKit class of plugin.
 func ConfigKit(lib *glick.Library) error {
+	if lib == nil {
+		return glick.ErrNilLib
+	}
 	return lib.AddConfigurator("KIT", func(l *glick.Library, line int, cfg *glick.Config) error {
 		ppo, err := l.ProtoPlugOut(cfg.API)
 		if err != nil { // internal error, simple test case impossible
