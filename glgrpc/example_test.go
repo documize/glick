@@ -22,39 +22,41 @@ const (
 
 func ConfigGRPChw(lib *glick.Library) error {
 	return lib.AddConfigurator("gRPChw", func(l *glick.Library, line int, cfg *glick.Config) error {
-		if err := l.RegPlugin(cfg.API, cfg.Action,
-			func(ctx context.Context, in interface{}) (out interface{}, err error) {
-				ins, ok := in.(*pb.HelloRequest)
-				if !ok {
-					return nil, errors.New("not *pb.HelloRequest")
-				}
-				out = interface{}(&pb.HelloReply{})
-				outsp := out.(*pb.HelloReply)
-				dialOpt := []grpc.DialOption{grpc.WithInsecure()}
-				if deadline, ok := ctx.Deadline(); ok {
-					dialOpt = append(dialOpt,
-						grpc.WithTimeout(deadline.Sub(time.Now())))
-				}
-				conn, err := grpc.Dial(address, dialOpt...)
-				if err != nil {
-					return nil, err
-				}
-				defer func() {
-					if e := conn.Close(); e != nil {
-						panic(e)
+		for _, action := range cfg.Actions {
+			if err := l.RegPlugin(cfg.API, action,
+				func(ctx context.Context, in interface{}) (out interface{}, err error) {
+					ins, ok := in.(*pb.HelloRequest)
+					if !ok {
+						return nil, errors.New("not *pb.HelloRequest")
 					}
-				}()
-				c := pb.NewGreeterClient(conn)
+					out = interface{}(&pb.HelloReply{})
+					outsp := out.(*pb.HelloReply)
+					dialOpt := []grpc.DialOption{grpc.WithInsecure()}
+					if deadline, ok := ctx.Deadline(); ok {
+						dialOpt = append(dialOpt,
+							grpc.WithTimeout(deadline.Sub(time.Now())))
+					}
+					conn, err := grpc.Dial(address, dialOpt...)
+					if err != nil {
+						return nil, err
+					}
+					defer func() {
+						if e := conn.Close(); e != nil {
+							panic(e)
+						}
+					}()
+					c := pb.NewGreeterClient(conn)
 
-				r, err := c.SayHello(context.Background(), ins)
-				if err != nil {
-					return nil, err
-				}
-				*outsp = *r
-				return out, nil
-			}); err != nil {
-			return fmt.Errorf("entry %d GRPChw register plugin error: %v",
-				line, err)
+					r, err := c.SayHello(context.Background(), ins)
+					if err != nil {
+						return nil, err
+					}
+					*outsp = *r
+					return out, nil
+				}, cfg); err != nil {
+				return fmt.Errorf("entry %d GRPChw register plugin error: %v",
+					line, err)
+			}
 		}
 		return nil
 	})
@@ -76,8 +78,8 @@ func ExampleGRPChw() {
 	if err := ConfigGRPChw(l); err != nil {
 		log.Fatal(err)
 	}
-	if err := l.Config([]byte(`[
-{"API":"hw","Action":"hwAct","Type":"gRPChw","Path":"` + address + `"}
+	if err := l.Configure([]byte(`[
+{"API":"hw","Actions":["hwAct"],"Type":"gRPChw","Path":"` + address + `"}
 		]`)); err != nil {
 		log.Fatal(err)
 	}

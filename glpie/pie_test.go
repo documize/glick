@@ -29,7 +29,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		return
 	}
 	if err := l.RegPlugin("string/&string", "cmdBad",
-		glpie.PluginPie(useJSON, "dingbat", "doodah", nil, protoOut)); err == nil {
+		glpie.PluginPie(useJSON, "dingbat", "doodah", nil, protoOut), nil); err == nil {
 		t.Error("garbage pie plugin did not fail")
 		return
 	}
@@ -51,7 +51,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		cmdPath = "./_test/json/json"
 	}
 	if err := l.RegPlugin(api, act,
-		glpie.PluginPie(useJSON, "CI.CopyIntX", cmdPath, nil, tisOut)); err != nil {
+		glpie.PluginPie(useJSON, "CI.CopyIntX", cmdPath, nil, tisOut), nil); err != nil {
 		t.Error("unable to create " + err.Error())
 		return
 	}
@@ -69,7 +69,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		t.Error("over-long pie plugin did not timeout")
 	}
 	if err := l.RegPlugin(api, act+"bad",
-		glpie.PluginPie(true, "CI.CopyIntX", "./_test/bad/bad", nil, tisOut)); err != nil {
+		glpie.PluginPie(true, "CI.CopyIntX", "./_test/bad/bad", nil, tisOut), nil); err != nil {
 		t.Error("unable to create " + err.Error())
 		return
 	}
@@ -78,7 +78,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		t.Error("bad pie plugin did not error")
 	}
 	if err := l.RegPlugin(api, act+"badder",
-		glpie.PluginPie(true, "CI.CopyIntX", "./_test/bad/main.go", nil, tisOut)); err != nil {
+		glpie.PluginPie(true, "CI.CopyIntX", "./_test/bad/main.go", nil, tisOut), nil); err != nil {
 		t.Error("unable to create " + err.Error())
 		return
 	}
@@ -86,8 +86,8 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 	if _, err := l.Run(nil, api, act+"badder", par); err == nil {
 		t.Error("non-runnable bad pie plugin did not error")
 	}
-	if err := l.Config([]byte(`[
-{"API":"` + api + `","Action":"intStr1","Type":"PIE","Path":"./_test/gob/gob","Method":"CI.CopyIntX"}
+	if err := l.Configure([]byte(`[
+{"API":"` + api + `","Actions":["intStr1"],"Type":"PIE","Path":"./_test/gob/gob","Method":"CI.CopyIntX"}
 		]`)); err != nil {
 		t.Error(err)
 	}
@@ -95,18 +95,18 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 	if _, err := l.Run(nil, api, "intStr1", par); err != nil {
 		t.Error("unable to run intStr1 " + err.Error())
 	}
-	if err := l.Config([]byte(`[
-{"API":"` + api + `","Action":"intStr2","Type":"PIE"}
+	if err := l.Configure([]byte(`[
+{"API":"` + api + `","Actions":["intStr2"],"Type":"PIE"}
 		]`)); err == nil {
 		t.Error("unsuited end pie exe not spotted")
 	}
-	if err := l.Config([]byte(`[
-{"API":"` + api + `","Action":"intStr1","Type":"PIE","Path":"illegal path"}
+	if err := l.Configure([]byte(`[
+{"API":"` + api + `","Actions":["intStr1"],"Type":"PIE","Path":"illegal path"}
 		]`)); err == nil {
 		t.Error("unsuited pie exe path not spotted")
 	}
-	if err := l.Config([]byte(`[
-{"API":"nothing here","Action":"intStr1","Type":"PIE"}
+	if err := l.Configure([]byte(`[
+{"API":"nothing here","Actions":["intStr1"],"Type":"PIE"}
 		]`)); err == nil {
 		t.Error("unsuited pie api not spotted")
 	}

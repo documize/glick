@@ -58,22 +58,27 @@ func PluginKitJSONoverHTTP(cmdPath string, ppo glick.ProtoPlugOut) glick.Plugin 
 
 // ConfigKit provides the Configurator for the GoKit class of plugin.
 func ConfigKit(lib *glick.Library) error {
+	if lib == nil {
+		return glick.ErrNilLib
+	}
 	return lib.AddConfigurator("KIT", func(l *glick.Library, line int, cfg *glick.Config) error {
 		ppo, err := l.ProtoPlugOut(cfg.API)
 		if err != nil { // internal error, simple test case impossible
 			return fmt.Errorf(
-				"entry %d Go-Kit plugin error for api: %s action: %s error: %s",
-				line, cfg.API, cfg.Action, err)
+				"entry %d Go-Kit plugin error for api: %s actions: %v error: %s",
+				line, cfg.API, cfg.Actions, err)
 		}
 		if !cfg.JSON {
 			return fmt.Errorf(
 				"entry %d Go-Kit: non-JSON plugins are not supported",
 				line)
 		}
-		if err := l.RegPlugin(cfg.API, cfg.Action, PluginKitJSONoverHTTP(cfg.Path, ppo)); err != nil {
-			// internal error, simple test case impossible
-			return fmt.Errorf("entry %d Go-Kit register plugin error: %v",
-				line, err)
+		for _, action := range cfg.Actions {
+			if err := l.RegPlugin(cfg.API, action, PluginKitJSONoverHTTP(cfg.Path, ppo), cfg); err != nil {
+				// internal error, simple test case impossible
+				return fmt.Errorf("entry %d Go-Kit register plugin error: %v",
+					line, err)
+			}
 		}
 		return nil
 	})

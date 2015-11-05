@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 	"sync"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 )
 
 var (
+	// ErrNilLib means the library pointer is nil.
+	ErrNilLib = errors.New("nil library")
 	// ErrNilAPI means an API value is nil.
 	ErrNilAPI = errors.New("nil api")
 	// ErrDupAPI means that a duplicate name has been given for an API.
@@ -39,7 +42,11 @@ type Overloader func(ctx context.Context, api, action string, handler Plugin) (c
 type plugkey struct {
 	api, action string // the strings to choose a plugin
 }
-type plugmap map[plugkey]Plugin // how tp
+type plugval struct {
+	plug Plugin
+	cfg  *Config
+}
+type plugmap map[plugkey]plugval
 type apidef struct {
 	ppi        interface{}   // a prototype of the input type
 	ppo        ProtoPlugOut  // a function returning a prototype of the output type
@@ -82,6 +89,9 @@ func New(ov Overloader) (*Library, error) {
 // The in/out prototype defines the type that must be passed in and out.
 // The timeout gives the maximum time that a Plugin using this API may take to execute.
 func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto ProtoPlugOut, timeout time.Duration) error {
+	if l == nil {
+		return ErrNilLib
+	}
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	if inPrototype == nil || outPlugProto == nil || outPlugProto() == nil {
@@ -98,7 +108,10 @@ func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto Proto
 
 // RegPlugin registers a Plugger to use for this action on an api.
 // Duplicate actions simply overload what is there.
-func (l *Library) RegPlugin(api, action string, handler Plugin) error {
+func (l *Library) RegPlugin(api, action string, handler Plugin, cfg *Config) error {
+	if l == nil {
+		return ErrNilLib
+	}
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	if _, hasAPI := l.apim[api]; !hasAPI {
@@ -107,7 +120,7 @@ func (l *Library) RegPlugin(api, action string, handler Plugin) error {
 	if handler == nil {
 		return ErrNoPlug
 	}
-	l.pim[plugkey{api, action}] = handler
+	l.pim[plugkey{api, action}] = plugval{handler, cfg}
 	return nil
 }
 
@@ -115,6 +128,9 @@ func (l *Library) RegPlugin(api, action string, handler Plugin) error {
 // The library overloader function may decide from the context that a non-standard
 // action should be run.
 func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (out interface{}, err error) {
+	if l == nil {
+		return nil, ErrNilLib
+	}
 	l.mtx.RLock()
 	defer l.mtx.RUnlock()
 
@@ -136,7 +152,11 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 		ctx = context.Background()
 	}
 
-	handler, found := l.pim[plugkey{api, action}]
+	var handler Plugin
+	pv, found := l.pim[plugkey{api, action}]
+	if found {
+		handler = pv.plug
+	}
 
 	// should this run call and overload function?
 	if l.ovfn != nil {
@@ -177,10 +197,56 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 
 // ProtoPlugOut provides the way to return a function to create the output for a plugin.
 func (l *Library) ProtoPlugOut(api string) (ppo ProtoPlugOut, err error) {
-	v, ok := l.apim[api]
-	if !ok {
-		err = errors.New("could not find api: " + api)
+	if l == nil {
+		return nil, ErrNilLib
 	}
-	ppo = v.ppo
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
+	if v, ok := l.apim[api]; !ok {
+		err = errors.New("could not find api: " + api)
+	} else {
+		ppo = v.ppo
+	}
 	return
+}
+
+// Actions provides the names of all registered plugin actions for an api.
+func (l *Library) Actions(api string) ([]string, error) {
+	if l == nil {
+		return nil, ErrNilLib
+	}
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
+	if _, ok := l.apim[api]; !ok {
+		return nil, errors.New("could not find api: " + api)
+	}
+	var ret []string
+	for pv := range l.pim {
+		if pv.api == api {
+			ret = append(ret, pv.action)
+		}
+	}
+	sort.Strings(ret)
+	return ret, nil
+}
+
+// Config returns a pointer to the JSON Config struct for a given API and Action,
+// or nil if no Config exists.
+func (l *Library) Config(api, action string) *Config {
+	if l == nil {
+		return nil
+	}
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
+	return l.pim[plugkey{api, action}].cfg
+}
+
+// Token is a convenience function that returns the Token string for a given API and Action,
+// if one exists.
+func (l *Library) Token(api, action string) string {
+	cfg := l.Config(api, action)
+	if cfg == nil {
+		return ""
+	}
+	return cfg.Token
 }

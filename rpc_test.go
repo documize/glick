@@ -74,7 +74,7 @@ func TestRPC(t *testing.T) {
 		}
 
 		if err := l.RegPlugin(api, act,
-			glick.PluginRPC(useJSON, "CI.CopyIntX", endPt, tisOut)); err != nil {
+			glick.PluginRPC(useJSON, "CI.CopyIntX", endPt, tisOut), nil); err != nil {
 			t.Error("unable to create JsonRPC " + err.Error())
 			return
 		}
@@ -93,27 +93,24 @@ func TestRPC(t *testing.T) {
 		}
 
 		if err := l.RegPlugin(api, "bep",
-			glick.PluginRPC(useJSON, "", "localhost:8080", tisOut)); err == nil {
+			glick.PluginRPC(useJSON, "", "localhost:8080", tisOut), nil); err == nil {
 			t.Error("able to create empty end-point method")
 			return
 		}
 
 		if err := l.RegPlugin(api, "bep",
-			glick.PluginRPC(useJSON, "CI.CopyIntX", "±!@£$%^&*() bad end point", tisOut)); err == nil {
-			t.Error("able to create bad endpoint")
+			glick.PluginRPC(useJSON, "CI.CopyIntX", "", tisOut), nil); err == nil {
+			t.Error("able to create empty endpoint")
 			return
 		}
 
-		if _, err := l.Run(nil, api, "bep", par); err == nil {
-			t.Error("did not error on bad end-point")
-		}
 		if err := l.RegPlugin(api, "errEP",
-			glick.PluginRPC(useJSON, "CI.CopyIntX", "localhost:9999", tisOut)); err == nil {
-			t.Error("did not error on duff endpoint")
+			glick.PluginRPC(useJSON, "CI.CopyIntX", "localhost:9999", tisOut), nil); err != nil {
+			t.Error("error on valid (if unused) endpoint")
 			return
 		}
 		if _, err := l.Run(nil, api, "errEP", par); err == nil {
-			t.Error("did not error on error end-point")
+			t.Error("did not error on unpopulated end-point")
 		}
 
 		noPoint := func() interface{} { return interface{}(42) }
@@ -121,7 +118,7 @@ func TestRPC(t *testing.T) {
 			t.Error(err)
 		}
 		if err := l.RegPlugin("noPoint", "errEP",
-			glick.PluginRPC(useJSON, "CI.CopyIntX", "localhost:9999", noPoint)); err == nil {
+			glick.PluginRPC(useJSON, "CI.CopyIntX", "localhost:9999", noPoint), nil); err == nil {
 			t.Error("a non-pointer return should error")
 		}
 
