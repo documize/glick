@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/url"
+	"strconv"
+	"strings"
 )
 
 // Config defines a line in the JSON configuration file for a glick Libarary.
 type Config struct {
+	Plugin  string   // name of the plugin server, used to configure URL ports.
 	API     string   // must already exist.
 	Actions []string // these must be unique within the API.
 	Token   string   // authorisation string to pass in the API, if it contains a Token field.
@@ -68,4 +73,47 @@ func (l *Library) Configure(b []byte) error {
 		}
 	}
 	return nil
+}
+
+// Port returns the first port number it comes across for
+// a given Plugin name in a json config file, in the form: ":9999".
+func Port(configJSONpath, pluginServerName string) (string, error) {
+
+	b, err := ioutil.ReadFile(configJSONpath)
+	if err != nil {
+		return "", err
+	}
+
+	var m []Config
+	if err := json.Unmarshal(b, &m); err != nil {
+		return "", err
+	}
+
+	for _, e := range m {
+		if e.Plugin == pluginServerName {
+			url, err := url.Parse(e.Path)
+			if err != nil {
+				return "", err
+			}
+			bits := strings.Split(url.Host, ":")
+			if len(bits) == 2 { // ignore if no ":" in Host
+				_, err = strconv.Atoi(bits[1])
+				if err != nil {
+					return bits[1], err
+				}
+				return ":" + bits[1], nil
+			}
+			_, err = strconv.Atoi(url.Opaque) // port could be in Opaque
+			if err == nil {
+				return ":" + url.Opaque, nil
+			}
+			switch url.Scheme { // more to go here?
+			case "http":
+				return ":80", nil
+			case "https":
+				return ":443", nil
+			}
+		}
+	}
+	return "", ErrNoAPI
 }
