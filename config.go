@@ -13,11 +13,12 @@ import (
 // Config defines a line in the JSON configuration file for a glick Libarary.
 type Config struct {
 	Plugin  string   // name of the plugin server, used to configure URL ports.
+	Disable bool     // disable tbe plugin by setting this to true
 	API     string   // must already exist.
 	Actions []string // these must be unique within the API.
 	Token   string   // authorisation string to pass in the API, if it contains a Token field.
 	Type    string   // the type of plugin, e.g. "RPC","URL","CMD"...
-	JSON    bool     // should the plugin use JSON rather than GOB encoding, if relavent.
+	Gob     bool     // should the plugin use GOB encoding rather than JSON, if relavent.
 	Method  string   // the service method to use in the plugin, if relavent.
 	Static  bool     // only used by "URL" to signal a static address.
 	Path    string   // path to the end-point for "RPC" or local command for "URL".
@@ -56,20 +57,22 @@ func (l *Library) Configure(b []byte) error {
 		return err
 	}
 	for line, cfg := range m {
-		if _, ok := l.apim[cfg.API]; !ok {
-			return fmt.Errorf("entry %d unknown api %s ", line+1, cfg.API)
-		}
-		if cfgfn, ok := l.cfgm[cfg.Type]; ok {
-			if err := cfgfn(l, line+1, &cfg); err != nil {
-				return err
+		if !cfg.Disable {
+			if _, ok := l.apim[cfg.API]; !ok {
+				return fmt.Errorf("entry %d unknown api %s ", line+1, cfg.API)
 			}
-		} else {
-			validTypes := ""
-			for t := range l.cfgm {
-				validTypes += " '" + t + "',"
+			if cfgfn, ok := l.cfgm[cfg.Type]; ok {
+				if err := cfgfn(l, line+1, &cfg); err != nil {
+					return err
+				}
+			} else {
+				validTypes := ""
+				for t := range l.cfgm {
+					validTypes += " '" + t + "',"
+				}
+				return fmt.Errorf("entry %d unknown config type %s (expected one of:%s)",
+					line+1, cfg.Type, validTypes)
 			}
-			return fmt.Errorf("entry %d unknown config type %s (expected one of:%s)",
-				line+1, cfg.Type, validTypes)
 		}
 	}
 	return nil
@@ -77,6 +80,7 @@ func (l *Library) Configure(b []byte) error {
 
 // Port returns the first port number it comes across for
 // a given Plugin name in a json config file, in the form: ":9999".
+// TODO add tests for this code.
 func Port(configJSONpath, pluginServerName string) (string, error) {
 
 	b, err := ioutil.ReadFile(configJSONpath)
@@ -90,7 +94,7 @@ func Port(configJSONpath, pluginServerName string) (string, error) {
 	}
 
 	for _, e := range m {
-		if e.Plugin == pluginServerName {
+		if e.Plugin == pluginServerName && !e.Disable {
 			url, err := url.Parse(e.Path)
 			if err != nil {
 				return "", err
