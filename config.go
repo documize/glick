@@ -21,7 +21,8 @@ type Config struct {
 	Gob     bool     // should the plugin use GOB encoding rather than JSON, if relavent.
 	Method  string   // the service method to use in the plugin, if relavent.
 	Static  bool     // only used by "URL" to signal a static address.
-	Path    string   // path to the end-point for "RPC" or local command for "URL".
+	Path    string   // path to the end-point for "RPC" or "URL".
+	Cmd     string   // command to run to start an image in "CMD", or to start a local "RPC" server.
 	Args    []string // only used by "CMD", command line arguments.
 	Comment string   // a place to put comments about the entry.
 }
@@ -62,7 +63,8 @@ func (l *Library) Configure(b []byte) error {
 				return fmt.Errorf("entry %d unknown api %s ", line+1, cfg.API)
 			}
 			if cfgfn, ok := l.cfgm[cfg.Type]; ok {
-				if err := cfgfn(l, line+1, &cfg); err != nil {
+				thisConfig := cfg
+				if err := cfgfn(l, line+1, &thisConfig); err != nil {
 					return err
 				}
 			} else {

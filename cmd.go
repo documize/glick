@@ -71,7 +71,7 @@ func ConfigCmd(lib *Library) error {
 			return fmt.Errorf("entry %d API %s is not of simple type (string/*string) ",
 				line, cfg.API)
 		}
-		pi := PluginCmd(cfg.Path, cfg.Args, l.apim[cfg.API].ppo())
+		pi := PluginCmd(cfg.Cmd, cfg.Args, l.apim[cfg.API].ppo())
 		for _, action := range cfg.Actions {
 			if err := l.RegPlugin(cfg.API, action, pi, cfg); err != nil {
 				return fmt.Errorf("entry %d CMD register plugin error: %v",

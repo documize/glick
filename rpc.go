@@ -2,9 +2,11 @@ package glick
 
 import (
 	"fmt"
+	"io"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"net/url"
+	"os/exec"
 	"reflect"
 
 	"golang.org/x/net/context"
@@ -63,4 +65,59 @@ func ConfigRPC(lib *Library) error {
 		}
 		return nil
 	})
+}
+
+type rpcLog struct {
+	plugin []byte
+	target io.Writer
+}
+
+func (l rpcLog) Write(p []byte) (int, error) {
+	b := make([]byte, 0, len(l.plugin)+len(p))
+	b = append(b, l.plugin...)
+	b = append(b, p...)
+	_, err := l.target.Write(b)
+	return len(p), err
+}
+
+// StartLocalRPCservers starts up local RPC server plugins.
+// TODO add tests.
+func (l *Library) StartLocalRPCservers(stdOut, stdErr io.Writer) error {
+	if l == nil {
+		return ErrNilLib
+	}
+
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
+
+	servers := make(map[string]struct{})
+
+	for _, v := range l.pim {
+		if v.cfg != nil {
+			if !v.cfg.Disable && v.cfg.Type == "RPC" && v.cfg.Cmd != "" && v.cfg.Plugin != "" {
+				_, found := servers[v.cfg.Plugin]
+				if !found {
+					servers[v.cfg.Plugin] = struct{}{}
+					cmdPath, e := exec.LookPath(v.cfg.Cmd)
+					if e != nil {
+						return ErrNoPlug
+					}
+					fmt.Fprintln(stdOut, "Start local RPC server:", v.cfg.Plugin)
+					var se, so rpcLog
+					se.plugin = []byte(v.cfg.Plugin + ": ")
+					so.plugin = se.plugin
+					se.target = stdErr
+					so.target = stdOut
+					ecmd := exec.Command(cmdPath, v.cfg.Args...)
+					ecmd.Stdout = so
+					ecmd.Stderr = se
+					err := ecmd.Start()
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
