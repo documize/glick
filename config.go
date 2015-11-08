@@ -21,7 +21,8 @@ type Config struct {
 	Gob     bool     // should the plugin use GOB encoding rather than JSON, if relavent.
 	Method  string   // the service method to use in the plugin, if relavent.
 	Static  bool     // only used by "URL" to signal a static address.
-	Path    string   // path to the end-point for "RPC" or local command for "URL".
+	Path    string   // path to the end-point for "RPC" or "URL".
+	Cmd     string   // command to run to start an image in "CMD", or to start a local "RPC" server.
 	Args    []string // only used by "CMD", command line arguments.
 	Comment string   // a place to put comments about the entry.
 }
@@ -57,21 +58,32 @@ func (l *Library) Configure(b []byte) error {
 		return err
 	}
 	for line, cfg := range m {
-		if !cfg.Disable {
-			if _, ok := l.apim[cfg.API]; !ok {
-				return fmt.Errorf("entry %d unknown api %s ", line+1, cfg.API)
+		if cfg.Plugin == "" { // unnamed plugin => pre-programmed
+			if cfg.Disable { // only possible thing to do is disable existing entries
+				l.mtx.Lock()
+				for _, act := range cfg.Actions {
+					delete(l.pim, plugkey{api: cfg.API, action: act})
+				}
+				l.mtx.Unlock()
 			}
-			if cfgfn, ok := l.cfgm[cfg.Type]; ok {
-				if err := cfgfn(l, line+1, &cfg); err != nil {
-					return err
+		} else {
+			if !cfg.Disable { // only set it up if not disabled
+				if _, ok := l.apim[cfg.API]; !ok {
+					return fmt.Errorf("entry %d unknown api %s ", line+1, cfg.API)
 				}
-			} else {
-				validTypes := ""
-				for t := range l.cfgm {
-					validTypes += " '" + t + "',"
+				if cfgfn, ok := l.cfgm[cfg.Type]; ok {
+					thisConfig := cfg
+					if err := cfgfn(l, line+1, &thisConfig); err != nil {
+						return err
+					}
+				} else {
+					validTypes := ""
+					for t := range l.cfgm {
+						validTypes += " '" + t + "',"
+					}
+					return fmt.Errorf("entry %d unknown config type %s (expected one of:%s)",
+						line+1, cfg.Type, validTypes)
 				}
-				return fmt.Errorf("entry %d unknown config type %s (expected one of:%s)",
-					line+1, cfg.Type, validTypes)
 			}
 		}
 	}

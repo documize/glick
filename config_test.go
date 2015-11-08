@@ -36,12 +36,12 @@ func TestConfig(t *testing.T) {
 		t.Error("missing Type not an error")
 	}
 	if err := l.Configure([]byte(`[
-{"API":"string/*string","Actions":["pwd"],"Type":"CMD","Path":"pwd"}
+{"API":"string/*string","Actions":["pwd"],"Type":"CMD","Cmd":"pwd"}
 		]`)); err != nil {
 		t.Error(err)
 	}
 	if err := l.Configure([]byte(`[
-{"API":"string/*string","Actions":["garbage"],"Type":"CMD","Path":"garbage"}
+{"API":"string/*string","Actions":["garbage"],"Type":"CMD","Cmd":"garbage"}
 		]`)); err == nil {
 		t.Error("garbage cmd path did not error")
 	}
@@ -49,7 +49,7 @@ func TestConfig(t *testing.T) {
 		t.Error(err)
 	}
 	if err := l.Configure([]byte(`[
-{"API":"int/*string","Actions":["badAPI"],"Type":"CMD","Path":"pwd"}
+{"API":"int/*string","Actions":["badAPI"],"Type":"CMD","Cmd":"pwd"}
 		]`)); err == nil {
 		t.Error("unsuited API for cmd did not error")
 	}
