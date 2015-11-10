@@ -55,8 +55,11 @@ func (p *pi) plugin(ctx context.Context, in, out interface{}) error {
 }
 
 // PluginPie enables plugin commands created using github.com/natefinch/pie.
-func PluginPie(useJSON bool, serviceMethod, cmdPath string, args []string, ppo glick.ProtoPlugOut) glick.Plugin {
-	f, e := os.Open(cmdPath)
+func PluginPie(useJSON bool, serviceMethod string, cmd []string, ppo glick.ProtoPlugOut) glick.Plugin {
+	if len(cmd) == 0 {
+		return nil
+	}
+	f, e := os.Open(cmd[0])
 	if e != nil {
 		return nil
 	}
@@ -64,7 +67,7 @@ func PluginPie(useJSON bool, serviceMethod, cmdPath string, args []string, ppo g
 	if e != nil {
 		return nil
 	}
-	ret := &pi{useJSON, serviceMethod, cmdPath, args, sync.Mutex{}, nil, nil}
+	ret := &pi{useJSON, serviceMethod, cmd[0], cmd[1:], sync.Mutex{}, nil, nil}
 	ret.newClient()
 	return func(ctx context.Context, in interface{}) (out interface{}, err error) {
 		out = ppo()
@@ -84,7 +87,7 @@ func ConfigPIE(lib *glick.Library) error {
 			return fmt.Errorf("entry %d PIE register plugin error: %v",
 				line, err) // no simple test possible for this path
 		}
-		pi := PluginPie(cfg.JSON, cfg.Method, cfg.Path, cfg.Args, ppo)
+		pi := PluginPie(!cfg.Gob, cfg.Method, cfg.Cmd, ppo)
 		for _, action := range cfg.Actions {
 			if err := l.RegPlugin(cfg.API, action, pi, cfg); err != nil {
 				return fmt.Errorf("entry %d PIE register plugin error: %v",

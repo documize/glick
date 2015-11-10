@@ -79,7 +79,7 @@ func ExampleGRPChw() {
 		log.Fatal(err)
 	}
 	if err := l.Configure([]byte(`[
-{"API":"hw","Actions":["hwAct"],"Type":"gRPChw","Path":"` + address + `"}
+{"Plugin":"ExampleGRPChw","API":"hw","Actions":["hwAct"],"Type":"gRPChw","Path":"` + address + `"}
 		]`)); err != nil {
 		log.Fatal(err)
 	}

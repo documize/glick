@@ -94,11 +94,15 @@ func (l *Library) StartLocalRPCservers(stdOut, stdErr io.Writer) error {
 
 	for _, v := range l.pim {
 		if v.cfg != nil {
-			if !v.cfg.Disable && v.cfg.Type == "RPC" && v.cfg.Cmd != "" && v.cfg.Plugin != "" {
+			if !v.cfg.Disabled &&
+				v.cfg.Type == "RPC" &&
+				len(v.cfg.Cmd) > 0 &&
+				v.cfg.Cmd[0] != "" &&
+				v.cfg.Plugin != "" {
 				_, found := servers[v.cfg.Plugin]
 				if !found {
 					servers[v.cfg.Plugin] = struct{}{}
-					cmdPath, e := exec.LookPath(v.cfg.Cmd)
+					cmdPath, e := exec.LookPath(v.cfg.Cmd[0])
 					if e != nil {
 						return ErrNoPlug
 					}
@@ -108,7 +112,7 @@ func (l *Library) StartLocalRPCservers(stdOut, stdErr io.Writer) error {
 					so.plugin = se.plugin
 					se.target = stdErr
 					so.target = stdOut
-					ecmd := exec.Command(cmdPath, v.cfg.Args...)
+					ecmd := exec.Command(cmdPath, v.cfg.Cmd[1:]...)
 					ecmd.Stdout = so
 					ecmd.Stderr = se
 					err := ecmd.Start()

@@ -29,7 +29,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		return
 	}
 	if err := l.RegPlugin("string/&string", "cmdBad",
-		glpie.PluginPie(useJSON, "dingbat", "doodah", nil, protoOut), nil); err == nil {
+		glpie.PluginPie(useJSON, "dingbat", []string{"doodah"}, protoOut), nil); err == nil {
 		t.Error("garbage pie plugin did not fail")
 		return
 	}
@@ -51,7 +51,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		cmdPath = "./_test/json/json"
 	}
 	if err := l.RegPlugin(api, act,
-		glpie.PluginPie(useJSON, "CI.CopyIntX", cmdPath, nil, tisOut), nil); err != nil {
+		glpie.PluginPie(useJSON, "CI.CopyIntX", []string{cmdPath}, tisOut), nil); err != nil {
 		t.Error("unable to create " + err.Error())
 		return
 	}
@@ -69,7 +69,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		t.Error("over-long pie plugin did not timeout")
 	}
 	if err := l.RegPlugin(api, act+"bad",
-		glpie.PluginPie(true, "CI.CopyIntX", "./_test/bad/bad", nil, tisOut), nil); err != nil {
+		glpie.PluginPie(true, "CI.CopyIntX", []string{"./_test/bad/bad"}, tisOut), nil); err != nil {
 		t.Error("unable to create " + err.Error())
 		return
 	}
@@ -78,7 +78,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		t.Error("bad pie plugin did not error")
 	}
 	if err := l.RegPlugin(api, act+"badder",
-		glpie.PluginPie(true, "CI.CopyIntX", "./_test/bad/main.go", nil, tisOut), nil); err != nil {
+		glpie.PluginPie(true, "CI.CopyIntX", []string{"./_test/bad/main.go"}, tisOut), nil); err != nil {
 		t.Error("unable to create " + err.Error())
 		return
 	}
@@ -86,27 +86,28 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 	if _, err := l.Run(nil, api, act+"badder", par); err == nil {
 		t.Error("non-runnable bad pie plugin did not error")
 	}
+	gobbler := fmt.Sprintf("%v", !useJSON)
 	if err := l.Configure([]byte(`[
-{"API":"` + api + `","Actions":["intStr1"],"Type":"PIE","Path":"./_test/gob/gob","Method":"CI.CopyIntX"}
+{"Plugin":"pie1","API":"` + api + `","Actions":["intStr1"],"Type":"PIE","Cmd":["` + cmdPath + `"],"Method":"CI.CopyIntX","Gob":` + gobbler + `}
 		]`)); err != nil {
 		t.Error(err)
 	}
 	par.I = 42
 	if _, err := l.Run(nil, api, "intStr1", par); err != nil {
-		t.Error("unable to run intStr1 " + err.Error())
+		t.Error("unable to run intStr1 for " + api + " err=" + err.Error())
 	}
 	if err := l.Configure([]byte(`[
-{"API":"` + api + `","Actions":["intStr2"],"Type":"PIE"}
+{"Plugin":"pie2","API":"` + api + `","Actions":["intStr2"],"Type":"PIE"}
 		]`)); err == nil {
 		t.Error("unsuited end pie exe not spotted")
 	}
 	if err := l.Configure([]byte(`[
-{"API":"` + api + `","Actions":["intStr1"],"Type":"PIE","Path":"illegal path"}
+{"Plugin":"pie3","API":"` + api + `","Actions":["intStr1"],"Type":"PIE","Cmd":["illegal path"]}
 		]`)); err == nil {
 		t.Error("unsuited pie exe path not spotted")
 	}
 	if err := l.Configure([]byte(`[
-{"API":"nothing here","Actions":["intStr1"],"Type":"PIE"}
+{"Plugin":"pie4","API":"nothing here","Actions":["intStr1"],"Type":"PIE"}
 		]`)); err == nil {
 		t.Error("unsuited pie api not spotted")
 	}

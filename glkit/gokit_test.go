@@ -37,8 +37,8 @@ func TestGoKitStringsvc1(t *testing.T) {
 		t.Error(err)
 	}
 	if err := l.Configure([]byte(`[
-{"API":"uppercase","Actions":["uc"],"Type":"KIT","Path":"http://localhost:8080/uppercase","JSON":true},
-{"API":"uppercase","Actions":["lc"],"Type":"KIT","Path":"http://localhost:8080/lowercase","JSON":true}
+{"Plugin":"gk","API":"uppercase","Actions":["uc"],"Type":"KIT","Path":"http://localhost:8080/uppercase","JSON":true},
+{"Plugin":"gk","API":"uppercase","Actions":["lc"],"Type":"KIT","Path":"http://localhost:8080/lowercase","JSON":true}
 		]`)); err != nil {
 		t.Error(err)
 	}
@@ -57,7 +57,7 @@ func TestGoKitStringsvc1(t *testing.T) {
 		t.Error(err)
 	}
 	if err := l.Configure([]byte(`[
-{"API":"uppercase","Actions":["uc"],"Type":"KIT","Path":"http://localhost:8080/uppercase"}
+{"Plugin":"gk","API":"uppercase","Actions":["uc"],"Type":"KIT","Path":"http://localhost:8080/uppercase","Gob":true}
 		]`)); err == nil {
 		t.Error("did not spot non-JSON")
 	}
