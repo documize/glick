@@ -12,19 +12,18 @@ import (
 
 // Config defines a line in the JSON configuration file for a glick Libarary.
 type Config struct {
-	Plugin  string   // name of the plugin server, used to configure URL ports.
-	Disable bool     // disable tbe plugin by setting this to true
-	API     string   // must already exist.
-	Actions []string // these must be unique within the API.
-	Token   string   // authorisation string to pass in the API, if it contains a Token field.
-	Type    string   // the type of plugin, e.g. "RPC","URL","CMD"...
-	Gob     bool     // should the plugin use GOB encoding rather than JSON, if relavent.
-	Method  string   // the service method to use in the plugin, if relavent.
-	Static  bool     // only used by "URL" to signal a static address.
-	Path    string   // path to the end-point for "RPC" or "URL".
-	Cmd     string   // command to run to start an image in "CMD", or to start a local "RPC" server.
-	Args    []string // only used by "CMD", command line arguments.
-	Comment string   // a place to put comments about the entry.
+	Plugin   string   // name of the plugin server, used to configure URL ports.
+	Disabled bool     // disable the plugin(s) or plugin server by setting this to true
+	API      string   // must already exist.
+	Actions  []string // these must be unique within the API.
+	Token    string   // authorisation string to pass in the API, if it contains a Token field.
+	Type     string   // the type of plugin, e.g. "RPC","URL","CMD"...
+	Gob      bool     // should the plugin use GOB encoding rather than JSON, if relavent.
+	Method   string   // the service method to use in the plugin, if relavent.
+	Static   bool     // only used by "URL" to signal a static address.
+	Path     string   // path to the end-point for "RPC" or "URL".
+	Cmd      []string // command to run to start an image in "CMD", or to start a local "RPC" server.
+	Comment  string   // a place to put comments about the entry.
 }
 
 // Configurator is a type of function that allows plug-in fuctionality to the Config process.
@@ -59,7 +58,7 @@ func (l *Library) Configure(b []byte) error {
 	}
 	for line, cfg := range m {
 		if cfg.Plugin == "" { // unnamed plugin => pre-programmed
-			if cfg.Disable { // only possible thing to do is disable existing entries
+			if cfg.Disabled { // disable existing entries
 				l.mtx.Lock()
 				for _, act := range cfg.Actions {
 					delete(l.pim, plugkey{api: cfg.API, action: act})
@@ -67,7 +66,7 @@ func (l *Library) Configure(b []byte) error {
 				l.mtx.Unlock()
 			}
 		} else {
-			if !cfg.Disable { // only set it up if not disabled
+			if !cfg.Disabled { // only set it up if not disabled
 				if _, ok := l.apim[cfg.API]; !ok {
 					return fmt.Errorf("entry %d unknown api %s ", line+1, cfg.API)
 				}
@@ -106,7 +105,7 @@ func Port(configJSONpath, pluginServerName string) (string, error) {
 	}
 
 	for _, e := range m {
-		if e.Plugin == pluginServerName && !e.Disable {
+		if e.Plugin == pluginServerName && !e.Disabled {
 			url, err := url.Parse(e.Path)
 			if err != nil {
 				return "", err

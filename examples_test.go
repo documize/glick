@@ -58,7 +58,7 @@ func Example() {
 
 	// now overload an os version of timeNow/lookup via a JSON config
 	if err := lib.Configure([]byte(`[
-{"API":"timeNow","Actions":["lookup"],"Type":"CMD","Path":"date"}
+{"Plugin":"OS-style-date","API":"timeNow","Actions":["lookup"],"Type":"CMD","Cmd":["date"]}
 		]`)); err != nil {
 		fmt.Println(err)
 	}

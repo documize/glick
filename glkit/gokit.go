@@ -68,7 +68,7 @@ func ConfigKit(lib *glick.Library) error {
 				"entry %d Go-Kit plugin error for api: %s actions: %v error: %s",
 				line, cfg.API, cfg.Actions, err)
 		}
-		if !cfg.JSON {
+		if cfg.Gob {
 			return fmt.Errorf(
 				"entry %d Go-Kit: non-JSON plugins are not supported",
 				line)
