@@ -119,10 +119,8 @@ func outDef() interface{} {
 }
 
 func Forever(ctx context.Context, in interface{}) (interface{}, error) {
-	t := false
-	for {
-	}
-	return &t, nil // this line is unreachable
+	time.Sleep(time.Hour)
+	return nil, nil // this line is unreachable in practice
 }
 func outForever() interface{} {
 	var t bool
@@ -138,14 +136,11 @@ func outJustBad() interface{} {
 	return interface{}(&t)
 }
 
-func TestOverloader(t *testing.T) {
+func TestOverloaderMOL(t *testing.T) {
 	hadOvStub := Tov
 	l, nerr := glick.New(func(ctx context.Context, api, act string, handler glick.Plugin) (context.Context, glick.Plugin, error) {
 		if api == "abc" && act == "meaning-of-life" {
 			return ctx, hadOvStub, nil
-		}
-		if api == "abc" && act == "bad" {
-			return ctx, nil, errors.New("you done a bad... bad... thing")
 		}
 		return ctx, nil, nil
 	})
@@ -177,12 +172,60 @@ func TestOverloader(t *testing.T) {
 			t.Error("Overloaded function not called")
 		}
 	}
+}
+
+func TestOverloaderBad(t *testing.T) {
+	l, nerr := glick.New(func(ctx context.Context, api, act string, handler glick.Plugin) (context.Context, glick.Plugin, error) {
+		if api == "abc" && act == "bad" {
+			return ctx, nil, errors.New("you done a bad... bad... thing")
+		}
+		return ctx, nil, nil
+	})
+	if nerr != nil {
+		t.Error(nerr)
+	}
+	var prototype int
+	if err := l.RegAPI("abc", prototype,
+		func() interface{} { var b bool; return interface{}(&b) },
+		time.Second); err != nil {
+		t.Error(err)
+		return
+	}
 	if err := l.RegPlugin("abc", "bad", Def, nil); err != nil {
 		t.Error(err)
 		return
 	}
 	if _, err := l.Run(nil, "abc", "bad", 1); err == nil {
 		t.Error("overloader should have errored")
+		return
+	}
+	ctx, can := context.WithTimeout(context.Background(), time.Millisecond)
+	defer can()
+	if err := l.RegPlugin("abc", "justBad", JustBad, nil); err != nil {
+		t.Error(err)
+		return
+	}
+	ctx, can = context.WithTimeout(context.Background(), time.Millisecond)
+	defer can()
+	if _, err := l.Run(ctx, "abc", "justBad", 1); err == nil {
+		t.Error("overloader should have errored")
+		return
+	}
+
+}
+
+func TestOverloaderForever(t *testing.T) {
+	l, nerr := glick.New(func(ctx context.Context, api, act string, handler glick.Plugin) (context.Context, glick.Plugin, error) {
+		return ctx, nil, nil
+	})
+	if nerr != nil {
+		t.Error(nerr)
+	}
+	var prototype int
+	if err := l.RegAPI("abc", prototype,
+		func() interface{} { var b bool; return interface{}(&b) },
+		time.Second); err != nil {
+		t.Error(err)
 		return
 	}
 	if err := l.RegPlugin("abc", "forever", Forever, nil); err != nil {
@@ -195,15 +238,4 @@ func TestOverloader(t *testing.T) {
 		t.Error("overloader should have errored")
 		return
 	}
-	if err := l.RegPlugin("abc", "justBad", JustBad, nil); err != nil {
-		t.Error(err)
-		return
-	}
-	ctx, can = context.WithTimeout(context.Background(), time.Millisecond)
-	defer can()
-	if _, err := l.Run(ctx, "abc", "justBad", 1); err == nil {
-		t.Error("overloader should have errored")
-		return
-	}
-
 }

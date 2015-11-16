@@ -7,7 +7,7 @@ import (
 	test "github.com/documize/glick/_test"
 )
 
-func TestConfig(t *testing.T) {
+func TestBadConfig(t *testing.T) {
 	l, ne := glick.New(nil)
 	if ne != nil {
 		t.Error(ne)
@@ -23,9 +23,21 @@ func TestConfig(t *testing.T) {
 		]`)); err == nil {
 		t.Error("missing API not an error")
 	}
+	if err := l.AddConfigurator("zombie", nil); err == nil {
+		t.Error("nil configurator not spotted")
+	}
+	if err := glick.ConfigGetURL(l); err == nil {
+		t.Error("duplicate configurator not spotted")
+	}
+}
+
+func TestConfig(t *testing.T) {
+	l, ne := glick.New(nil)
+	if ne != nil {
+		t.Error(ne)
+	}
 	protoString := ""
 	outProtoString := func() interface{} { var s string; return interface{}(&s) }
-	outProtoInt := func() interface{} { var i int; return interface{}(&i) }
 
 	if err := l.RegAPI("string/*string", protoString, outProtoString, 0); err != nil {
 		t.Error(err)
@@ -58,6 +70,20 @@ func TestConfig(t *testing.T) {
 		]`)); err == nil {
 		t.Error("unsuited API for URL did not error")
 	}
+}
+
+func TestConfig2(t *testing.T) {
+	l, ne := glick.New(nil)
+	if ne != nil {
+		t.Error(ne)
+	}
+	protoString := ""
+	outProtoString := func() interface{} { var s string; return interface{}(&s) }
+	outProtoInt := func() interface{} { var i int; return interface{}(&i) }
+
+	if err := l.RegAPI("string/*string", protoString, outProtoString, 0); err != nil {
+		t.Error(err)
+	}
 	var is test.IntStr
 	if err := l.RegAPI("test", is, outProtoInt, 0); err != nil {
 		t.Error(err)
@@ -84,11 +110,5 @@ func TestConfig(t *testing.T) {
 {"Plugin":"p84","API":"string/*string","Actions":["badURL"],"Type":"URL","Path":"","Static":true}
 		]`)); err == nil {
 		t.Error("unsuited URL not spotted")
-	}
-	if err := l.AddConfigurator("zombie", nil); err == nil {
-		t.Error("nil configurator not spotted")
-	}
-	if err := glick.ConfigGetURL(l); err == nil {
-		t.Error("duplicate configurator not spotted")
 	}
 }

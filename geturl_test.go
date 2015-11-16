@@ -9,7 +9,6 @@ import (
 
 func TestGetURL(t *testing.T) {
 	outProtoString := func() interface{} { var s string; return interface{}(&s) }
-	outProtoInt := func() interface{} { var i int; return interface{}(&i) }
 	l, nerr := glick.New(nil)
 	if nerr != nil {
 		t.Error(nerr)
@@ -42,6 +41,17 @@ func TestGetURL(t *testing.T) {
 	if _, err := l.Run(nil, "string/*string", "dynamic1", "!@£$%^&*()"); err == nil {
 		t.Error("bad url did not error")
 	}
+}
+
+func TestGetURLint(t *testing.T) {
+	outProtoString := func() interface{} { var s string; return interface{}(&s) }
+	outProtoInt := func() interface{} { var i int; return interface{}(&i) }
+	l, nerr := glick.New(nil)
+	if nerr != nil {
+		t.Error(nerr)
+	}
+	proto := ""
+
 	ip := 0
 	if err := l.RegAPI("int/*string", ip, outProtoString, 2*time.Second); err != nil {
 		t.Error(err)

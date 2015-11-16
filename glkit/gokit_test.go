@@ -62,6 +62,10 @@ func TestGoKitStringsvc1(t *testing.T) {
 		t.Error("did not spot non-JSON")
 	}
 
+	testCount(t)
+}
+
+func testCount(t *testing.T) {
 	// use the more direct method for count
 	count := glkit.PluginKitJSONoverHTTP("http://localhost:8080/count",
 		func() interface{} { return &countResponse{} })
@@ -86,6 +90,8 @@ func TestAssignFn(t *testing.T) {
 	kep = x
 	glp = glick.Plugin(kep)
 	kep = endpoint.Endpoint(glp)
+	// NOTE: kep assigned to but never used, so:
+	_ = kep
 }
 
 // example below modified from https://github.com/go-kit/kit/blob/master/examples/stringsvc1/main.go

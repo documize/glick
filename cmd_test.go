@@ -8,7 +8,7 @@ import (
 	"github.com/documize/glick"
 )
 
-func cmdSwitchTest(t *testing.T, useJSON bool) {
+func TestCmd(t *testing.T) {
 	l, errN := glick.New(nil)
 	if errN != nil {
 		t.Error(errN)
@@ -48,11 +48,15 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 	}
 	if _, err := l.Run(nil, "string/&string", "exit1", proto); err == nil {
 		t.Error("exit1.sh does not give an error")
-	} else {
-		if err.Error() != "exit status 1" {
-			t.Error("exit1.sh does not give correct error")
-		}
 	}
+}
+
+func TestBadInterface(t *testing.T) {
+	l, errN := glick.New(nil)
+	if errN != nil {
+		t.Error(errN)
+	}
+	var proto string
 	var ip int
 	ipProto := func() interface{} { var i int; return interface{}(&i) }
 	if err := l.RegAPI("int/&int", ip, ipProto, 3*time.Second); err != nil {
@@ -81,6 +85,15 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 		t.Error("does not error on non *string ouput value")
 		return
 	}
+}
+
+func TestTimeout(t *testing.T) {
+	l, errN := glick.New(nil)
+	if errN != nil {
+		t.Error(errN)
+	}
+	var proto string
+	outProto := func() interface{} { var s string; return interface{}(&s) }
 	if err := l.RegAPI("alwaysTimeout", proto, outProto, 1*time.Second); err != nil {
 		t.Error(err)
 	}
@@ -92,9 +105,4 @@ func cmdSwitchTest(t *testing.T, useJSON bool) {
 	if _, err := l.Run(nil, "alwaysTimeout", "sleep", "foo"); err == nil {
 		t.Error("does not timeout when it should")
 	}
-}
-
-func TestCmd(t *testing.T) {
-	cmdSwitchTest(t, true)
-	cmdSwitchTest(t, false)
 }

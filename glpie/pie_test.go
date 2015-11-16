@@ -14,6 +14,7 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 	l, nerr := glick.New(nil)
 	if nerr != nil {
 		t.Error(nerr)
+		return
 	}
 	if err := glpie.ConfigPIE(l); err != nil {
 		t.Error(err)
@@ -56,6 +57,10 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		return
 	}
 
+	parTest(t, l, api, act, cmdPath, useJSON, tisOut)
+
+}
+func parTest(t *testing.T, l *glick.Library, api, act, cmdPath string, useJSON bool, tisOut func() interface{}) {
 	par := test.IntStr{I: 42}
 	if ret, err := l.Run(nil, api, act, par); err != nil {
 		t.Error("unable to run pie " + err.Error())
@@ -71,7 +76,6 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 	if err := l.RegPlugin(api, act+"bad",
 		glpie.PluginPie(true, "CI.CopyIntX", []string{"./_test/bad/bad"}, tisOut), nil); err != nil {
 		t.Error("unable to create " + err.Error())
-		return
 	}
 	par.I = 0
 	if _, err := l.Run(nil, api, act+"bad", par); err == nil {
@@ -80,19 +84,21 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 	if err := l.RegPlugin(api, act+"badder",
 		glpie.PluginPie(true, "CI.CopyIntX", []string{"./_test/bad/main.go"}, tisOut), nil); err != nil {
 		t.Error("unable to create " + err.Error())
-		return
 	}
 	par.I = 0
 	if _, err := l.Run(nil, api, act+"badder", par); err == nil {
 		t.Error("non-runnable bad pie plugin did not error")
 	}
+	parTestGobler(t, l, api, act, cmdPath, useJSON, tisOut)
+}
+func parTestGobler(t *testing.T, l *glick.Library, api, act, cmdPath string, useJSON bool, tisOut func() interface{}) {
 	gobbler := fmt.Sprintf("%v", !useJSON)
 	if err := l.Configure([]byte(`[
 {"Plugin":"pie1","API":"` + api + `","Actions":["intStr1"],"Type":"PIE","Cmd":["` + cmdPath + `"],"Method":"CI.CopyIntX","Gob":` + gobbler + `}
 		]`)); err != nil {
 		t.Error(err)
 	}
-	par.I = 42
+	par := test.IntStr{I: 42}
 	if _, err := l.Run(nil, api, "intStr1", par); err != nil {
 		t.Error("unable to run intStr1 for " + api + " err=" + err.Error())
 	}
@@ -111,7 +117,6 @@ func pieSwitchTest(t *testing.T, useJSON bool) {
 		]`)); err == nil {
 		t.Error("unsuited pie api not spotted")
 	}
-
 }
 
 func TestPie(t *testing.T) {
