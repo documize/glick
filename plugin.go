@@ -124,6 +124,22 @@ func (l *Library) RegPlugin(api, action string, handler Plugin, cfg *Config) err
 	return nil
 }
 
+func (l *Library) def(ctx context.Context, api, action string, in interface{}) (apidef, error) {
+	if in == nil {
+		return apidef{}, ErrNilAPI
+	}
+	def, ok := l.apim[api]
+	if ok {
+		if !reflect.TypeOf(in).AssignableTo(def.ppiT) {
+			return apidef{}, fmt.Errorf("bad api types - in: got %T want %T",
+				in, def.ppi)
+		}
+	} else {
+		return apidef{}, ErrNoAPI
+	}
+	return def, nil
+}
+
 // Run a plugin for a given action on an API, passing data in/out.
 // The library overloader function may decide from the context that a non-standard
 // action should be run.
@@ -134,18 +150,9 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 	l.mtx.RLock()
 	defer l.mtx.RUnlock()
 
-	// check api correct
-	if in == nil {
-		return nil, ErrNilAPI
-	}
-	def, ok := l.apim[api]
-	if ok {
-		if !reflect.TypeOf(in).AssignableTo(def.ppiT) {
-			return nil, fmt.Errorf("bad api types - in: got %T want %T",
-				in, def.ppi)
-		}
-	} else {
-		return nil, ErrNoAPI
+	def, err := l.def(ctx, api, action, in)
+	if err != nil {
+		return nil, err
 	}
 
 	if ctx == nil || ctx == context.TODO() {
@@ -171,6 +178,11 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 			found = true
 		}
 	}
+
+	return l.run(ctx, api, found, handler, def, in)
+}
+
+func (l *Library) run(ctx context.Context, api string, found bool, handler Plugin, def apidef, in interface{}) (out interface{}, err error) {
 	if !found || handler == nil {
 		return nil, ErrNoPlug
 	}

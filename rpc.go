@@ -80,6 +80,19 @@ func (l rpcLog) Write(p []byte) (int, error) {
 	return len(p), err
 }
 
+func validRPC(v plugval) bool {
+	if v.cfg != nil {
+		if !v.cfg.Disabled &&
+			v.cfg.Type == "RPC" &&
+			len(v.cfg.Cmd) > 0 &&
+			v.cfg.Cmd[0] != "" &&
+			v.cfg.Plugin != "" {
+			return true
+		}
+	}
+	return false
+}
+
 // StartLocalRPCservers starts up local RPC server plugins.
 // TODO add tests.
 func (l *Library) StartLocalRPCservers(stdOut, stdErr io.Writer) error {
@@ -93,32 +106,26 @@ func (l *Library) StartLocalRPCservers(stdOut, stdErr io.Writer) error {
 	servers := make(map[string]struct{})
 
 	for _, v := range l.pim {
-		if v.cfg != nil {
-			if !v.cfg.Disabled &&
-				v.cfg.Type == "RPC" &&
-				len(v.cfg.Cmd) > 0 &&
-				v.cfg.Cmd[0] != "" &&
-				v.cfg.Plugin != "" {
-				_, found := servers[v.cfg.Plugin]
-				if !found {
-					servers[v.cfg.Plugin] = struct{}{}
-					cmdPath, e := exec.LookPath(v.cfg.Cmd[0])
-					if e != nil {
-						return ErrNoPlug
-					}
-					fmt.Fprintln(stdOut, "Start local RPC server:", v.cfg.Plugin)
-					var se, so rpcLog
-					se.plugin = []byte(v.cfg.Plugin + ": ")
-					so.plugin = se.plugin
-					se.target = stdErr
-					so.target = stdOut
-					ecmd := exec.Command(cmdPath, v.cfg.Cmd[1:]...)
-					ecmd.Stdout = so
-					ecmd.Stderr = se
-					err := ecmd.Start()
-					if err != nil {
-						return err
-					}
+		if validRPC(v) {
+			_, found := servers[v.cfg.Plugin]
+			if !found {
+				servers[v.cfg.Plugin] = struct{}{}
+				cmdPath, e := exec.LookPath(v.cfg.Cmd[0])
+				if e != nil {
+					return ErrNoPlug
+				}
+				fmt.Fprintln(stdOut, "Start local RPC server:", v.cfg.Plugin)
+				var se, so rpcLog
+				se.plugin = []byte(v.cfg.Plugin + ": ")
+				so.plugin = se.plugin
+				se.target = stdErr
+				so.target = stdOut
+				ecmd := exec.Command(cmdPath, v.cfg.Cmd[1:]...)
+				ecmd.Stdout = so
+				ecmd.Stderr = se
+				err := ecmd.Start()
+				if err != nil {
+					return err
 				}
 			}
 		}
