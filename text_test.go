@@ -10,7 +10,7 @@ import (
 
 func textReader(t *testing.T, tst interface{}, atp string, i int) {
 	rdr, err := glick.TextReader(tst)
-	if (err == nil && i == 0) || (err != nil && i > 0) {
+	if err == nil && i == 0 || err != nil && i > 0 {
 		t.Errorf("unexpected TextReader error for %T: %s", tst, err)
 	} else {
 		if i > 0 {
@@ -26,7 +26,7 @@ func textReader(t *testing.T, tst interface{}, atp string, i int) {
 }
 func textBytes(t *testing.T, tst interface{}, atp string, i int) {
 	byts, err := glick.TextBytes(tst)
-	if (err == nil && i == 0) || (err != nil && i > 0) {
+	if err == nil && i == 0 || err != nil && i > 0 {
 		t.Errorf("unexpected TextBytes error for %T: %s", tst, err)
 	} else {
 		if i > 0 {
@@ -38,7 +38,7 @@ func textBytes(t *testing.T, tst interface{}, atp string, i int) {
 }
 func textConvert(t *testing.T, tst interface{}, atp string, i int, atpB []byte) {
 	ifc, err := glick.TextConvert(atpB, tst)
-	if (err == nil && i == 0) || (err != nil && i > 0) {
+	if err == nil && i == 0 || err != nil && i > 0 {
 		t.Errorf("unexpected TextConvert error for %T: %s", tst, err)
 	} else {
 		if i > 0 {
@@ -60,11 +60,11 @@ func ifcstring(ifc interface{}) string {
 	case string:
 		ifcs = ifc.(string)
 	case *string:
-		ifcs = *(ifc.(*string))
+		ifcs = *ifc.(*string)
 	case []byte:
 		ifcs = string(ifc.([]byte))
 	case *[]byte:
-		ifcs = string((*(ifc.(*[]byte))))
+		ifcs = string(*ifc.(*[]byte))
 	}
 	return ifcs
 }
@@ -75,7 +75,7 @@ func TestText(t *testing.T) {
 	tests := []interface{}{true, atp, &atp, atpB, &atpB}
 	for i, tst := range tests {
 		ok := glick.IsText(tst)
-		if (ok && i == 0) || (!ok && i > 0) {
+		if ok && i == 0 || !ok && i > 0 {
 			t.Errorf("unexpected IsTest for %T", tst)
 		}
 		textReader(t, tst, atp, i)

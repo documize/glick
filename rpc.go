@@ -127,6 +127,7 @@ func (l *Library) StartLocalRPCservers(stdOut, stdErr io.Writer) error {
 				if err != nil {
 					return err
 				}
+				l.subprocs = append(l.subprocs, ecmd)
 			}
 		}
 	}

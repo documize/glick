@@ -61,7 +61,7 @@ func TestSimple(t *testing.T) {
 	if ret, err := l.Run(nil, api, "Test", 42); err != nil {
 		t.Error(err)
 	} else {
-		if *(ret.(*int)) != 42 {
+		if *ret.(*int) != 42 {
 			t.Error("called plugin did not work")
 		}
 	}
@@ -161,14 +161,14 @@ func TestOverloaderMOL(t *testing.T) {
 	if ret, err := l.Run(nil, "abc", "default", 1); err != nil {
 		t.Error(err)
 	} else {
-		if *(ret.(*bool)) {
+		if *ret.(*bool) {
 			t.Error("Overloaded function called in error")
 		}
 	}
 	if ret, err := l.Run(nil, "abc", "meaning-of-life", 1); err != nil {
 		t.Error(err)
 	} else {
-		if !(*(ret.(*bool))) {
+		if !*ret.(*bool) {
 			t.Error("Overloaded function not called")
 		}
 	}

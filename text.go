@@ -29,9 +29,9 @@ func TextReader(t interface{}) (io.Reader, error) {
 	case []byte:
 		return bytes.NewReader(t.([]byte)), nil
 	case *string:
-		return strings.NewReader(*(t.(*string))), nil
+		return strings.NewReader(*t.(*string)), nil
 	case *[]byte:
-		return bytes.NewReader(*(t.(*[]byte))), nil
+		return bytes.NewReader(*t.(*[]byte)), nil
 	default:
 		return nil, ErrNotText
 	}
@@ -46,9 +46,9 @@ func TextBytes(t interface{}) ([]byte, error) {
 	case []byte:
 		return t.([]byte), nil
 	case *string:
-		return []byte(*(t.(*string))), nil
+		return []byte(*t.(*string)), nil
 	case *[]byte:
-		return *(t.(*[]byte)), nil
+		return *t.(*[]byte), nil
 	default:
 		return nil, ErrNotText
 	}

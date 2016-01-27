@@ -36,7 +36,7 @@ func TestCmd(t *testing.T) {
 	if proto, err := l.Run(nil, "string/&string", "pwd", proto); err != nil {
 		t.Error(err)
 	} else {
-		p := *(proto.(*string))
+		p := *proto.(*string)
 		if !strings.HasSuffix(p, "/glick\n") {
 			t.Error("wrong output from pwd: " + p)
 		}
