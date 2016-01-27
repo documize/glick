@@ -3,6 +3,7 @@ package glick
 import (
 	"errors"
 	"fmt"
+	"os/exec"
 	"reflect"
 	"sort"
 	"sync"
@@ -58,20 +59,22 @@ type cfgmap map[string]Configurator
 
 // Library holds the registered API and plugin database.
 type Library struct {
-	pim  plugmap      // a map of known plugins
-	apim apimap       // a map of known APIs
-	cfgm cfgmap       // a map of know configuration handlers
-	mtx  sync.RWMutex // mutex to protect map access
-	ovfn Overloader   // the function to call to overload which plugin to use at runtime
+	pim      plugmap      // a map of known plugins
+	apim     apimap       // a map of known APIs
+	cfgm     cfgmap       // a map of know configuration handlers
+	mtx      sync.RWMutex // mutex to protect map access
+	ovfn     Overloader   // the function to call to overload which plugin to use at runtime
+	subprocs []*exec.Cmd  // a slice of sub-processes created
 }
 
 // New returns an initialized Library.
 func New(ov Overloader) (*Library, error) {
 	lib := &Library{
-		apim: make(apimap),
-		pim:  make(plugmap),
-		cfgm: make(cfgmap),
-		ovfn: ov,
+		apim:     make(apimap),
+		pim:      make(plugmap),
+		cfgm:     make(cfgmap),
+		ovfn:     ov,
+		subprocs: make([]*exec.Cmd, 0),
 	}
 	if err := ConfigCmd(lib); err != nil {
 		return nil, err
@@ -261,4 +264,27 @@ func (l *Library) Token(api, action string) string {
 		return ""
 	}
 	return cfg.Token
+}
+
+// KillSubProcs created by StartLocalRPCservers() (or eventually maybe elsewhere).
+func (l *Library) KillSubProcs() error {
+	if l == nil {
+		return errors.New("pointer to Library is nil")
+	}
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
+	errStr := ""
+	for _, s := range l.subprocs {
+		var err error
+		err = s.Process.Kill()
+		if err != nil {
+			errStr += " : " + err.Error()
+		} else {
+			time.Sleep(time.Second)
+		}
+	}
+	if errStr == "" {
+		return nil
+	}
+	return errors.New(errStr)
 }
