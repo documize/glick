@@ -1,6 +1,7 @@
 package glick
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/rpc"
@@ -11,6 +12,9 @@ import (
 
 	"golang.org/x/net/context"
 )
+
+// InsecureSkipVerifyTLS should only be set to true when testing.
+var InsecureSkipVerifyTLS = false
 
 // PluginRPC returns a type which implements the Plugger interface for making an RPC.
 // The return type of this class of plugin must be a pointer.
@@ -24,17 +28,41 @@ func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) P
 	if err != nil {
 		return nil
 	}
+	useTLS := false
 	switch url.Scheme {
-	case "http", "https":
+	case "http":
 		endPoint = url.Host
+	case "https":
+		endPoint = url.Host
+		useTLS = true
 	}
 	return func(ctx context.Context, in interface{}) (out interface{}, err error) {
 		var client *rpc.Client
+		var conn *tls.Conn
 		var errDial error
+		var cfg = &tls.Config{
+			InsecureSkipVerify: InsecureSkipVerifyTLS,
+		}
 		if useJSON {
-			client, errDial = jsonrpc.Dial("tcp", endPoint)
+			if useTLS {
+				conn, errDial = tls.Dial("tcp", endPoint, cfg)
+				if errDial == nil {
+					defer conn.Close()
+					client = jsonrpc.NewClient(conn)
+				}
+			} else {
+				client, errDial = jsonrpc.Dial("tcp", endPoint)
+			}
 		} else {
-			client, errDial = rpc.Dial("tcp", endPoint)
+			if useTLS {
+				conn, errDial = tls.Dial("tcp", endPoint, cfg)
+				if errDial == nil {
+					defer conn.Close()
+					client = rpc.NewClient(conn)
+				}
+			} else {
+				client, errDial = rpc.Dial("tcp", endPoint)
+			}
 		}
 		if errDial != nil {
 			return nil, errDial
