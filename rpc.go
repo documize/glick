@@ -25,7 +25,7 @@ func PluginRPC(useJSON bool, serviceMethod, endPoint string, ppo ProtoPlugOut) P
 		return nil
 	}
 	switch url.Scheme {
-	case "http":
+	case "http", "https":
 		endPoint = url.Host
 	}
 	return func(ctx context.Context, in interface{}) (out interface{}, err error) {
