@@ -17,13 +17,22 @@ var (
 	ErrNilLib = errors.New("nil library")
 	// ErrNilAPI means an API value is nil.
 	ErrNilAPI = errors.New("nil api")
-	// ErrDupAPI means that a duplicate name has been given for an API.
-	ErrDupAPI = errors.New("duplicate api")
-	// ErrNoAPI means that the name of the API was not found in the map.
-	ErrNoAPI = errors.New("unknown api")
-	// ErrNoPlug means that no handler function was found for the plugin.
-	ErrNoPlug = errors.New("no plugin found")
 )
+
+// errDupAPI means that a duplicate name has been given for an API.
+func errDupAPI(name string) error {
+	return errors.New("duplicate api: " + name)
+}
+
+// errNoAPI means that the name of the API was not found in the map.
+func errNoAPI(name string) error {
+	return errors.New("unknown api: " + name)
+}
+
+// errNoPlug means that no handler function was found for the plugin.
+func errNoPlug(name string) error {
+	return errors.New("no plugin found: " + name)
+}
 
 // Plugin type provides the type of the every plugin function,
 // it has the same signature as Endpoint in "github.com/go-kit/kit".
@@ -101,7 +110,7 @@ func (l *Library) RegAPI(api string, inPrototype interface{}, outPlugProto Proto
 		return ErrNilAPI
 	}
 	if _, found := l.apim[api]; found {
-		return ErrDupAPI
+		return errDupAPI(api)
 	}
 	l.apim[api] = apidef{inPrototype, outPlugProto,
 		reflect.TypeOf(inPrototype), reflect.TypeOf(outPlugProto()),
@@ -118,10 +127,10 @@ func (l *Library) RegPlugin(api, action string, handler Plugin, cfg *Config) err
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 	if _, hasAPI := l.apim[api]; !hasAPI {
-		return ErrNoAPI
+		return errNoAPI(api)
 	}
 	if handler == nil {
-		return ErrNoPlug
+		return errNoPlug("nil handler for api "+api)
 	}
 	l.pim[plugkey{api, action}] = plugval{handler, cfg}
 	return nil
@@ -138,7 +147,7 @@ func (l *Library) def(ctx context.Context, api, action string, in interface{}) (
 				in, def.ppi)
 		}
 	} else {
-		return apidef{}, ErrNoAPI
+		return apidef{}, errNoAPI(api)
 	}
 	return def, nil
 }
@@ -187,7 +196,7 @@ func (l *Library) Run(ctx context.Context, api, action string, in interface{}) (
 
 func (l *Library) run(ctx context.Context, api string, found bool, handler Plugin, def apidef, in interface{}) (out interface{}, err error) {
 	if !found || handler == nil {
-		return nil, ErrNoPlug
+		return nil, errNoPlug("api "+api)
 	}
 	reply := make(chan plugOut)
 	ctxWT, cancel := context.WithTimeout(ctx, l.apim[api].timeout)

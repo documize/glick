@@ -24,13 +24,13 @@ func TestAPI(t *testing.T) {
 	if err := l.RegAPI("z", dummy, outGood, time.Second); err != nil {
 		t.Error("1st reg API returns error")
 	}
-	if err := l.RegAPI("z", dummy, outGood, time.Second); err != glick.ErrDupAPI {
+	if err := l.RegAPI("z", dummy, outGood, time.Second); err == nil{
 		t.Error("does not return duplicate api error")
 	}
-	if _, err := l.Run(nil, "z", "unknown", dummy); err != glick.ErrNoPlug {
+	if _, err := l.Run(nil, "z", "unknown", dummy); err == nil {
 		t.Error("does not return no plugin")
 	}
-	if _, err := l.Run(nil, "unknown", "unknown", dummy); err != glick.ErrNoAPI {
+	if _, err := l.Run(nil, "unknown", "unknown", dummy); err == nil {
 		t.Error("does not return unknown api error")
 	}
 }
@@ -48,7 +48,7 @@ func TestSimple(t *testing.T) {
 	}
 	api := "S"
 	var i int
-	if err := l.RegPlugin("unknown", "Test", Simp, nil); err != glick.ErrNoAPI {
+	if err := l.RegPlugin("unknown", "Test", Simp, nil); err == nil {
 		t.Error("register plugin does not give unknown API error")
 	}
 	if err := l.RegAPI(api, i, outSimp, time.Second); err != nil {

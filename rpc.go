@@ -140,7 +140,7 @@ func (l *Library) StartLocalRPCservers(stdOut, stdErr io.Writer) error {
 				servers[v.cfg.Plugin] = struct{}{}
 				cmdPath, e := exec.LookPath(v.cfg.Cmd[0])
 				if e != nil {
-					return ErrNoPlug
+					return errNoPlug(v.cfg.Cmd[0] + " (error: " + e.Error() + ")")
 				}
 				fmt.Fprintln(stdOut, "Start local RPC server:", v.cfg.Plugin)
 				var se, so rpcLog

@@ -128,7 +128,7 @@ func Port(configJSONpath, pluginServerName string) (string, error) {
 			}
 		}
 	}
-	return "", ErrNoAPI
+	return "", errNoAPI(pluginServerName)
 }
 
 // urlPort deduces the port information from a given URL.
