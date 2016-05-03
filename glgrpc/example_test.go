@@ -74,10 +74,10 @@ func ExampleGRPChw() {
 	if err = l.RegAPI("hw", &req, func() interface{} { var hr pb.HelloReply; return interface{}(&hr) }, 2*time.Second); err != nil {
 		log.Fatal(err)
 	}
-	if err := ConfigGRPChw(l); err != nil {
+	if err = ConfigGRPChw(l); err != nil {
 		log.Fatal(err)
 	}
-	if err := l.Configure([]byte(`[
+	if err = l.Configure([]byte(`[
 {"Plugin":"ExampleGRPChw","API":"hw","Actions":["hwAct"],"Type":"gRPChw","Path":"` + address + `"}
 		]`)); err != nil {
 		log.Fatal(err)
@@ -85,7 +85,8 @@ func ExampleGRPChw() {
 	req.Name = "gRPC"
 	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second)
 	defer cancelCtx()
-	repI, err := l.Run(ctx, "hw", "hwAct", &req)
+	var repI interface{}
+	repI, err = l.Run(ctx, "hw", "hwAct", &req)
 	if err != nil {
 		log.Fatal(err)
 	}
