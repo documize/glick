@@ -24,7 +24,7 @@ func TestAPI(t *testing.T) {
 	if err := l.RegAPI("z", dummy, outGood, time.Second); err != nil {
 		t.Error("1st reg API returns error")
 	}
-	if err := l.RegAPI("z", dummy, outGood, time.Second); err == nil{
+	if err := l.RegAPI("z", dummy, outGood, time.Second); err == nil {
 		t.Error("does not return duplicate api error")
 	}
 	if _, err := l.Run(nil, "z", "unknown", dummy); err == nil {
